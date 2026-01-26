@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar Prestasi - PUSDASTRA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body>
+
+    <!-- Video Background -->
+    <video autoplay muted loop id="video-bg">
+        <source src="assets/hero-video.mp4" type="video/mp4">
+    </video>
+
+    <!-- Top Bar -->
+    <div class="top-bar d-none d-lg-block">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+                <span><i class="bi bi-whatsapp text-success me-1"></i> 0851-9615-7474</span>
+                <span><i class="bi bi-envelope text-primary me-1"></i> disdikbud@pamekasankab.go.id</span>
+            </div>
+            <div>
+                <a href="https://www.facebook.com/search/top?q=disdikbud%20pamekasan" target="_blank"
+                    title="Facebook"><i class="fab fa-facebook text-glow-shine"></i></a>
+                <a href="https://www.instagram.com/dispendikpamekasan?igsh=bWdnbzF3ajA4YWgw_IG" target="_blank"
+                    title="Instagram"><i class="fab fa-instagram text-glow-shine"></i></a>
+                <a href="https://youtube.com/@disdikbudpamekasan?si=dREjynNqjl29ebF" target="_blank" title="YouTube"><i
+                        class="fab fa-youtube text-glow-shine"></i></a>
+                <a href="https://www.tiktok.com/@disdikbud.pamekasan?_r=1&_t=ZS-931ZNzQeYdQ_tiktok" target="_blank"
+                    title="TikTok"><i class="fab fa-tiktok text-glow-shine"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="index.html">
+                <img src="assets/logo.png" alt="Logo" height="55" class="me-3">
+                <div style="line-height: 1.2;">
+                    <span class="d-block fw-bold text-success fs-4" style="letter-spacing: 1px;">PUSDASTRA</span>
+                    <small class="d-block text-secondary fw-bold" style="font-size: 0.7rem;">
+                        PUSAT DATA PRESTASI SISWA<br>DINAS PENDIDIKAN DAN KEBUDAYAAN
+                    </small>
+                </div>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Beranda</a></li>
+                    <li class="nav-item"><a class="nav-link" href="statistik.html">Statistik</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="prestasi.html">Daftar Prestasi</a></li>
+                    <li class="nav-item"><a class="nav-link" href="about.html">Tentang</a></li>
+                    <li class="nav-item"><a class="nav-link" href="contact.html">Kontak</a></li>
+                    <li class="nav-item ms-lg-3">
+                        <a href="login.html" class="btn btn-primary px-4 rounded-pill">Login</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="bg-white py-5 shadow-sm mb-4">
+        <div class="container text-center">
+            <h1 class="fw-bold text-dark mb-2">Daftar Prestasi Siswa</h1>
+            <p class="text-muted">Cari dan temukan jejak prestasi membanggakan.</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container py-4">
+        <div class="row">
+            <!-- Filters Sidebar -->
+            <div class="col-lg-3 mb-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="card-title mb-0 fw-bold"><i class="bi bi-funnel"></i> Filter</h5>
+                    </div>
+                    <div class="card-body">
+                        <form>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Pencarian</label>
+                                <input type="text" class="form-control" placeholder="Nama siswa/sekolah...">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Tahun</label>
+                                <select class="form-select">
+                                    <option>Semua Tahun</option>
+                                    <option>2026</option>
+                                    <option>2025</option>
+                                    <option>2024</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Jenjang</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="" id="jenjangSD">
+                                    <label class="form-check-label" for="jenjangSD">SD</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="" id="jenjangSMP">
+                                    <label class="form-check-label" for="jenjangSMP">SMP</label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Tingkat Lomba</label>
+                                <select class="form-select">
+                                    <option>Semua Tingkat</option>
+                                    <option>Kecamatan</option>
+                                    <option>Kabupaten</option>
+                                    <option>Provinsi</option>
+                                    <option>Nasional</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Terapkan Filter</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="col-lg-9">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-4 py-3">Nama Siswa</th>
+                                        <th class="py-3">Kejuaraan</th>
+                                        <th class="py-3">Tingkat</th>
+                                        <th class="py-3">Tahun</th>
+                                        <th class="py-3">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="prestasiTableBody">
+                                    <!-- Dynamic Data loads here -->
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4 text-muted">Belum ada data prestasi.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <nav aria-label="Page navigation" class="mt-4" id="paginationNav">
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-5 pb-4">
+        <div class="container text-center pt-5 text-dark opacity-75">
+            <small>&copy; Created by Eva Nuyung Yunita KP-UIM 2026</small>
+        </div>
+    </footer>
+
+    <!-- Detail Modal -->
+    <div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Detail Prestasi</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="modalContent">
+                    <!-- Dynamic Content -->
+                    <p class="text-center text-muted">Memuat data...</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/data.js"></script>
+    <script src="assets/js/particles.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            loadPrestasiTable();
+        });
+
+        function loadPrestasiTable() {
+            const list = window.DataStore.getPrestasi();
+            const tbody = document.getElementById('prestasiTableBody');
+
+            if (list.length > 0) {
+                tbody.innerHTML = '';
+                list.forEach((p, index) => {
+                    const row = `
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-bold">${p.siswaName}</div>
+                                <small class="text-muted">${p.school}</small>
+                            </td>
+                            <td>
+                                <div>${p.eventName}</div>
+                                <small class="text-warning"><i class="bi bi-trophy-fill"></i> Juara ${p.rank}</small>
+                            </td>
+                            <td><span class="badge bg-${getBadgeColor(p.level)}">${p.level}</span></td>
+                            <td>${p.year}</td>
+                            <td><button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="showDetail(${index})">Detail</button></td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            } else {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">Belum ada data prestasi.</td></tr>`;
+            }
+        }
+
+        function getBadgeColor(level) {
+            if (level === 'Kecamatan') return 'info';
+            if (level === 'Kabupaten') return 'primary';
+            if (level === 'Provinsi') return 'success';
+            if (level === 'Nasional') return 'danger';
+            return 'secondary';
+        }
+
+        function showDetail(index) {
+            const list = window.DataStore.getPrestasi();
+            const p = list[index];
+            const modalBody = document.getElementById('modalContent');
+
+            modalBody.innerHTML = `
+                <div class="text-center mb-4">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3"
+                        style="width: 80px; height: 80px; font-size: 2rem;">${p.siswaName.charAt(0)}</div>
+                    <h4 class="fw-bold mb-1">${p.siswaName}</h4>
+                    <p class="text-muted mb-0">${p.school}</p>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between px-0">
+                        <span class="text-muted">Lomba</span>
+                        <span class="fw-medium">${p.eventName}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between px-0">
+                        <span class="text-muted">Tingkat</span>
+                        <span class="badge bg-${getBadgeColor(p.level)}">${p.level}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between px-0">
+                        <span class="text-muted">Capaian</span>
+                        <span class="fw-bold text-warning"><i class="bi bi-trophy-fill"></i> Juara ${p.rank}</span>
+                    </li>
+                     <li class="list-group-item d-flex justify-content-between px-0">
+                        <span class="text-muted">Tahun</span>
+                        <span class="fw-medium">${p.year}</span>
+                    </li>
+                </ul>
+             `;
+
+            const modal = new bootstrap.Modal(document.getElementById('detailModal'));
+            modal.show();
+        }
+    </script>
+</body>
+
+</html>

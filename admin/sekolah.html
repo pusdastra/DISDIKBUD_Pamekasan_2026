@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Sekolah - Admin PUSDASTRA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <style>
+        .sidebar {
+            width: 260px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            z-index: 1000;
+            transition: all 0.3s;
+        }
+
+        .main-content {
+            margin-left: 260px;
+            transition: all 0.3s;
+        }
+
+        @media (max-width: 991.98px) {
+            .sidebar {
+                margin-left: -260px;
+            }
+
+            .sidebar.active {
+                margin-left: 0;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+
+    <!-- Video Background -->
+    <video autoplay muted loop id="video-bg">
+        <source src="../assets/hero-video.mp4" type="video/mp4">
+    </video>
+
+    <!-- Navbar Mobile -->
+    <nav class="navbar navbar-dark bg-transparent d-lg-none sticky-top p-3">
+        <div class="d-flex w-100 justify-content-between align-items-center">
+            <span class="navbar-brand mb-0 h1">PUSDASTRA Admin</span>
+            <button class="btn btn-outline-light"
+                onclick="document.getElementById('sidebar').classList.toggle('active')">
+                <i class="bi bi-list"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <div class="sidebar d-flex flex-column p-3" id="sidebar">
+        <a href="../index.html"
+            class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none border-bottom border-secondary pb-3 w-100">
+            <i class="bi bi-speedometer2 fs-4 me-2"></i><span class="fs-5 fw-bold">Admin Panel</span>
+        </a>
+        <ul class="nav nav-pills flex-column mb-auto">
+            <li class="nav-item"><a href="dashboard.html" class="nav-link text-white"><i
+                        class="bi bi-house-door me-2"></i> Dashboard</a></li>
+            <li class="nav-item mt-3 text-white-50 small text-uppercase fw-bold ls-1">Master Data</li>
+            <li><a href="siswa.html" class="nav-link text-white"><i class="bi bi-people me-2"></i> Data Siswa</a></li>
+            <li><a href="prestasi.html" class="nav-link text-white"><i class="bi bi-trophy me-2"></i> Data Prestasi</a>
+            </li>
+            <li><a href="sekolah.html" class="nav-link active"><i class="bi bi-building me-2"></i> Data Sekolah</a></li>
+            <li class="nav-item mt-3 text-white-50 small text-uppercase fw-bold ls-1">Laporan & Setting</li>
+            <li><a href="laporan.html" class="nav-link text-white"><i class="bi bi-file-earmark-text me-2"></i>
+                    Laporan</a></li>
+            <li><a href="settings.html" class="nav-link text-white"><i class="bi bi-gear me-2"></i> Pengaturan</a></li>
+        </ul>
+    </div>
+
+    <main class="main-content p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="h3 fw-bold">Manajemen Sekolah</h2>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSekolahModal">
+                <i class="bi bi-plus-lg me-1"></i> Tambah Sekolah
+            </button>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex mb-3 gap-2">
+                    <input type="text" class="form-control w-auto flex-grow-1"
+                        placeholder="Cari Nama Sekolah / NPSN...">
+                    <select class="form-select w-auto">
+                        <option>Semua Kecamatan</option>
+                        <option>Pamekasan</option>
+                    </select>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>NPSN</th>
+                                <th>Nama Sekolah</th>
+                                <th>Jenjang</th>
+                                <th>Status</th>
+                                <th>Kecamatan</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sekolahTableBody">
+                            <!-- Dynamic Content -->
+                        </tbody>
+                    </table>
+                    <div id="emptyState" class="text-center py-5 d-none">
+                        <i class="bi bi-building fs-1 text-muted"></i>
+                        <p class="text-muted mt-2">Belum ada data sekolah.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Tambah Sekolah -->
+    <div class="modal fade" id="addSekolahModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Data Sekolah Baru</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addSekolahForm">
+                        <div class="mb-3">
+                            <label class="form-label">NPSN</label>
+                            <input type="number" id="inputNpsn" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Nama Sekolah</label>
+                            <input type="text" id="inputNamaSekolah" class="form-control" required>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <label class="form-label">Jenjang</label>
+                                <select id="inputJenjang" class="form-select">
+                                    <option>SD</option>
+                                    <option>SMP</option>
+                                    <option>SMA/SMK</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Status</label>
+                                <select id="inputStatus" class="form-select">
+                                    <option>Negeri</option>
+                                    <option>Swasta</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Kecamatan</label>
+                            <select id="inputKecamatan" class="form-select">
+                                <option>Pamekasan</option>
+                                <option>Proppo</option>
+                                <option>Tlanakan</option>
+                                <option>Pademawu</option>
+                                <option>Galis</option>
+                                <option>Larangan</option>
+                                <option>Pasean</option>
+                                <option>Waru</option>
+                                <option>Batu Marmar</option>
+                            </select>
+                        </div>
+                        <div class="modal-footer px-0 pb-0">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-primary">Simpan</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/js/data.js"></script>
+    <script src="../assets/js/particles.js"></script>
+    <script>
+        // Check Auth
+        if (!window.Auth.check()) window.location.href = '../login.html';
+
+        // Global state
+        let isEditing = false;
+        let editIndex = -1;
+
+        // Expose to window
+        window.deleteItem = deleteItem;
+        window.editItem = editItem;
+
+        function renderTable() {
+            const data = window.DataStore.getSekolah();
+            const tbody = document.getElementById('sekolahTableBody');
+            const emptyState = document.getElementById('emptyState');
+
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                emptyState.classList.remove('d-none');
+            } else {
+                emptyState.classList.add('d-none');
+                data.forEach((item, index) => {
+                    let badgeColor = item.jenjang === 'SD' ? 'primary' : (item.jenjang === 'SMP' ? 'success' : 'warning');
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${item.npsn}</td>
+                        <td class="fw-bold">${item.nama}</td>
+                        <td><span class="badge bg-${badgeColor}">${item.jenjang}</span></td>
+                        <td>${item.status}</td>
+                        <td>${item.kecamatan}</td>
+                        <td>
+                             <button class="btn btn-sm btn-warning me-1" onclick="window.editItem(${index})"><i class="bi bi-pencil"></i></button>
+                             <button class="btn btn-sm btn-danger" onclick="window.deleteItem(${index})"><i class="bi bi-trash"></i></button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        }
+
+        function deleteItem(index) {
+            if (confirm('Hapus data sekolah ini?')) {
+                try {
+                    window.DataStore.deleteSekolah(index);
+                    alert('Data berhasil dihapus!');
+                    renderTable();
+                } catch (e) {
+                    alert('Error: ' + e.message);
+                }
+            }
+        }
+
+        function editItem(index) {
+            const data = window.DataStore.getSekolah()[index];
+            if (!data) return;
+
+            document.getElementById('inputNpsn').value = data.npsn;
+            document.getElementById('inputNamaSekolah').value = data.nama;
+            document.getElementById('inputJenjang').value = data.jenjang;
+            document.getElementById('inputStatus').value = data.status;
+            document.getElementById('inputKecamatan').value = data.kecamatan;
+
+            isEditing = true;
+            editIndex = index;
+
+            document.querySelector('#addSekolahModal .modal-title').innerText = 'Edit Data Sekolah';
+            document.querySelector('#addSekolahModal button[type="submit"]').innerText = 'Update Data';
+
+            const modal = new bootstrap.Modal(document.getElementById('addSekolahModal'));
+            modal.show();
+        }
+
+        document.getElementById('addSekolahModal').addEventListener('hidden.bs.modal', () => {
+            document.getElementById('addSekolahForm').reset();
+            isEditing = false;
+            editIndex = -1;
+            document.querySelector('#addSekolahModal .modal-title').innerText = 'Data Sekolah Baru';
+            document.querySelector('#addSekolahModal button[type="submit"]').innerText = 'Simpan';
+        });
+
+        document.getElementById('addSekolahForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const newData = {
+                npsn: document.getElementById('inputNpsn').value,
+                nama: document.getElementById('inputNamaSekolah').value,
+                jenjang: document.getElementById('inputJenjang').value,
+                status: document.getElementById('inputStatus').value,
+                kecamatan: document.getElementById('inputKecamatan').value
+            };
+
+            if (isEditing) {
+                window.DataStore.updateSekolah(editIndex, newData);
+                alert('Data berhasil diperbarui!');
+            } else {
+                window.DataStore.addSekolah(newData);
+                alert('Data berhasil disimpan!');
+            }
+
+            const modalEl = document.getElementById('addSekolahModal');
+            let modal = bootstrap.Modal.getInstance(modalEl);
+            if (!modal) modal = new bootstrap.Modal(modalEl);
+            modal.hide();
+
+            renderTable();
+        });
+
+        renderTable();
+    </script>
+
+</html>

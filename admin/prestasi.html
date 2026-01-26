@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Prestasi - Admin PUSDASTRA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <style>
+        .sidebar {
+            width: 260px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            z-index: 1000;
+            transition: all 0.3s;
+        }
+
+        .main-content {
+            margin-left: 260px;
+            transition: all 0.3s;
+        }
+
+        @media (max-width: 991.98px) {
+            .sidebar {
+                margin-left: -260px;
+            }
+
+            .sidebar.active {
+                margin-left: 0;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+
+    <!-- Video Background -->
+    <video autoplay muted loop id="video-bg">
+        <source src="../assets/hero-video.mp4" type="video/mp4">
+    </video>
+
+    <!-- Sidebar -->
+    <div class="sidebar d-flex flex-column p-3" id="sidebar">
+        <a href="../index.html"
+            class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none border-bottom border-secondary pb-3 w-100">
+            <i class="bi bi-speedometer2 fs-4 me-2"></i><span class="fs-5 fw-bold">Admin Panel</span>
+        </a>
+        <ul class="nav nav-pills flex-column mb-auto">
+            <li class="nav-item"><a href="dashboard.html" class="nav-link text-white"><i
+                        class="bi bi-house-door me-2"></i> Dashboard</a></li>
+            <li class="nav-item mt-3 text-white-50 small text-uppercase fw-bold ls-1">Master Data</li>
+            <li><a href="siswa.html" class="nav-link text-white"><i class="bi bi-people me-2"></i> Data Siswa</a></li>
+            <li><a href="prestasi.html" class="nav-link active"><i class="bi bi-trophy me-2"></i> Data Prestasi</a></li>
+            <li><a href="sekolah.html" class="nav-link text-white"><i class="bi bi-building me-2"></i> Data Sekolah</a>
+            </li>
+            <li class="nav-item mt-3 text-white-50 small text-uppercase fw-bold ls-1">Laporan & Setting</li>
+            <li><a href="laporan.html" class="nav-link text-white"><i class="bi bi-file-earmark-text me-2"></i>
+                    Laporan</a></li>
+            <li><a href="settings.html" class="nav-link text-white"><i class="bi bi-gear me-2"></i> Pengaturan</a></li>
+            <li class="mt-4"><button onclick="window.Auth.logout()"
+                    class="btn btn-outline-danger w-100 btn-sm">Logout</button></li>
+        </ul>
+    </div>
+
+    <main class="main-content p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="h3 fw-bold">Manajemen Prestasi</h2>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPrestasiModal">
+                <i class="bi bi-plus-lg me-1"></i> Tambah Prestasi
+            </button>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Nama Siswa</th>
+                                <th>Lomba/Kegiatan</th>
+                                <th>Tingkat</th>
+                                <th>Peringkat</th>
+                                <th>Bukti</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="prestasiTableBody">
+                            <!-- Dynamic -->
+                        </tbody>
+                    </table>
+                    <div id="emptyState" class="text-center py-5 d-none">
+                        <i class="bi bi-trophy fs-1 text-muted"></i>
+                        <p class="text-muted mt-2">Belum ada data prestasi.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Tambah Prestasi -->
+    <div class="modal fade" id="addPrestasiModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Input Prestasi Baru</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addPrestasiForm">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Nama Siswa</label>
+                                <input type="text" id="inputSiswa" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Tanggal</label>
+                                <input type="date" id="inputTanggal" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Nama Lomba</label>
+                            <input type="text" id="inputLomba" class="form-control" required>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Tingkat</label>
+                                <select id="inputTingkat" class="form-select">
+                                    <option>Kabupaten</option>
+                                    <option>Provinsi</option>
+                                    <option>Nasional</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Peringkat</label>
+                                <select id="inputPeringkat" class="form-select">
+                                    <option>Juara 1</option>
+                                    <option>Juara 2</option>
+                                    <option>Juara 3</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Upload Bukti Foto (Sertifikat/Piala)</label>
+                            <input type="file" id="inputBukti" class="form-control" accept="image/*">
+                            <div class="form-text text-muted small">Maksimal 2MB. Format JPG/PNG.</div>
+                        </div>
+                        <div class="modal-footer px-0 pb-0">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-primary">Simpan Prestasi</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/js/data.js"></script>
+    <script src="../assets/js/particles.js"></script>
+    <script>
+        // Check Auth
+        if (!window.Auth.check()) window.location.href = '../login.html';
+
+        // Render
+        // Global state
+        let isEditing = false;
+        let editIndex = -1;
+
+        // Initialize Global Functions
+        window.renderTable = renderTable;
+        window.deleteItem = deleteItem;
+        window.editItem = editItem;
+        window.viewBukti = viewBukti;
+
+        // Render
+        function renderTable() {
+            const data = window.DataStore.getPrestasi();
+            const tbody = document.getElementById('prestasiTableBody');
+            const emptyState = document.getElementById('emptyState');
+
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                emptyState.classList.remove('d-none');
+            } else {
+                emptyState.classList.add('d-none');
+                data.forEach((item, index) => {
+                    const tr = document.createElement('tr');
+
+                    // Button logic for Bukti
+                    let buktiBtn = '<span class="text-muted small">Tidak ada</span>';
+                    if (item.bukti) {
+                        buktiBtn = `<button class="btn btn-sm btn-outline-primary" onclick="window.viewBukti(${index})"><i class="bi bi-download"></i> Lihat Bukti</button>`;
+                    }
+
+                    tr.innerHTML = `
+                        <td>${item.tanggal}</td>
+                        <td class="fw-bold">${item.siswa}</td>
+                        <td>${item.lomba}</td>
+                        <td><span class="badge bg-info text-dark">${item.tingkat}</span></td>
+                        <td>${item.peringkat}</td>
+                        <td>${buktiBtn}</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning me-1" onclick="window.editItem(${index})"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-sm btn-danger" onclick="window.deleteItem(${index})"><i class="bi bi-trash"></i></button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        }
+
+        function deleteItem(index) {
+            if (confirm('Hapus data prestasi ini?')) {
+                try {
+                    window.DataStore.deletePrestasi(index);
+                    alert('Data berhasil dihapus!');
+                    renderTable();
+                } catch (e) {
+                    alert('Error: ' + e.message);
+                }
+            }
+        }
+
+        function editItem(index) {
+            const data = window.DataStore.getPrestasi()[index];
+            if (!data) return;
+
+            document.getElementById('inputSiswa').value = data.siswa;
+            document.getElementById('inputTanggal').value = data.tanggal;
+            document.getElementById('inputLomba').value = data.lomba;
+            document.getElementById('inputTingkat').value = data.tingkat;
+            document.getElementById('inputPeringkat').value = data.peringkat;
+            // Note: File input cannot be pre-populated for security, user must re-upload if changing.
+
+            isEditing = true;
+            editIndex = index;
+
+            document.querySelector('#addPrestasiModal .modal-title').innerText = 'Edit Prestasi';
+            document.querySelector('#addPrestasiModal button[type="submit"]').innerText = 'Update Prestasi';
+
+            const modal = new bootstrap.Modal(document.getElementById('addPrestasiModal'));
+            modal.show();
+        }
+
+        function viewBukti(index) {
+            const data = window.DataStore.getPrestasi()[index];
+            if (data && data.bukti) {
+                // Open base64 image in new tab
+                const win = window.open();
+                win.document.write('<iframe src="' + data.bukti + '" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>');
+            } else {
+                alert('Bukti tidak ditemukan.');
+            }
+        }
+
+        document.getElementById('addPrestasiModal').addEventListener('hidden.bs.modal', () => {
+            document.getElementById('addPrestasiForm').reset();
+            isEditing = false;
+            editIndex = -1;
+            document.querySelector('#addPrestasiModal .modal-title').innerText = 'Input Prestasi Baru';
+            document.querySelector('#addPrestasiModal button[type="submit"]').innerText = 'Simpan Prestasi';
+        });
+
+        // Add/Update
+        document.getElementById('addPrestasiForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const fileInput = document.getElementById('inputBukti');
+            const file = fileInput.files[0];
+
+            // Core data
+            const newData = {
+                siswa: document.getElementById('inputSiswa').value,
+                tanggal: document.getElementById('inputTanggal').value,
+                lomba: document.getElementById('inputLomba').value,
+                tingkat: document.getElementById('inputTingkat').value,
+                peringkat: document.getElementById('inputPeringkat').value,
+                bukti: null // Default null
+            };
+
+            // If editing, preserve old proof if no new file
+            if (isEditing) {
+                const oldData = window.DataStore.getPrestasi()[editIndex];
+                newData.bukti = oldData.bukti;
+            }
+
+            const saveAndClose = () => {
+                if (isEditing) {
+                    window.DataStore.updatePrestasi(editIndex, newData);
+                    alert('Data berhasil diupdate!');
+                } else {
+                    window.DataStore.addPrestasi(newData);
+                    alert('Data berhasil disimpan!');
+                }
+
+                const modalEl = document.getElementById('addPrestasiModal');
+                let modal = bootstrap.Modal.getInstance(modalEl);
+                if (!modal) modal = new bootstrap.Modal(modalEl);
+                modal.hide();
+                renderTable();
+            };
+
+            // Process File if exists
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    newData.bukti = e.target.result; // Base64 string
+                    saveAndClose();
+                };
+                reader.readAsDataURL(file);
+            } else {
+                saveAndClose();
+            }
+        });
+
+        renderTable();
+    </script>
+</body>
+
+</html>

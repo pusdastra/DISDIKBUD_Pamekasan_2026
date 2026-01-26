@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tentang PUSDASTRA - Disdikbud Pamekasan</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body>
+
+    <!-- Video Background -->
+    <video autoplay muted loop id="video-bg">
+        <source src="assets/hero-video.mp4" type="video/mp4">
+    </video>
+
+    <!-- Top Bar -->
+    <div class="top-bar d-none d-lg-block">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+                <span><i class="bi bi-whatsapp text-success me-1"></i> 0851-9615-7474</span>
+                <span><i class="bi bi-envelope text-primary me-1"></i> disdikbud@pamekasankab.go.id</span>
+            </div>
+            <div>
+                <a href="https://www.facebook.com/search/top?q=disdikbud%20pamekasan" target="_blank"
+                    title="Facebook"><i class="fab fa-facebook text-glow-shine"></i></a>
+                <a href="https://www.instagram.com/dispendikpamekasan?igsh=bWdnbzF3ajA4YWgw_IG" target="_blank"
+                    title="Instagram"><i class="fab fa-instagram text-glow-shine"></i></a>
+                <a href="https://youtube.com/@disdikbudpamekasan?si=dREjynNqjl29ebF" target="_blank" title="YouTube"><i
+                        class="fab fa-youtube text-glow-shine"></i></a>
+                <a href="https://www.tiktok.com/@disdikbud.pamekasan?_r=1&_t=ZS-931ZNzQeYdQ_tiktok" target="_blank"
+                    title="TikTok"><i class="fab fa-tiktok text-glow-shine"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top shadow-sm">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="index.html">
+                <img src="assets/logo.png" alt="Logo" height="55" class="me-3">
+                <div style="line-height: 1.2;">
+                    <span class="d-block fw-bold text-success fs-4" style="letter-spacing: 1px;">PUSDASTRA</span>
+                    <small class="d-block text-secondary fw-bold" style="font-size: 0.7rem;">
+                        PUSAT DATA PRESTASI SISWA<br>DINAS PENDIDIKAN DAN KEBUDAYAAN
+                    </small>
+                </div>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Beranda</a></li>
+                    <li class="nav-item"><a class="nav-link" href="statistik.html">Statistik</a></li>
+                    <li class="nav-item"><a class="nav-link" href="prestasi.html">Daftar Prestasi</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="about.html">Tentang</a></li>
+                    <li class="nav-item"><a class="nav-link" href="contact.html">Kontak</a></li>
+                    <li class="nav-item ms-lg-2">
+                        <a href="login.html" class="btn btn-primary px-4 rounded-pill">Login</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Content -->
+    <section class="py-5">
+        <div class="container">
+            <div class="card border-0 shadow-sm p-4 text-dark">
+                <h2 class="fw-bold text-center mb-4">PROFIL DINAS PENDIDIKAN DAN KEBUDAYAAN<br>KABUPATEN PAMEKASAN</h2>
+                <hr class="mb-4">
+
+                <div class="text-center mb-5">
+                    <button type="button" class="btn btn-outline-primary rounded-pill px-4 fw-bold"
+                        data-bs-toggle="modal" data-bs-target="#visiMisiModal">
+                        <i class="bi bi-eye me-2"></i> Lihat Visi & Misi
+                    </button>
+                </div>
+
+                <div class="row mb-5">
+                    <div class="col-lg-12">
+                        <p class="lead text-center" style="text-align: justify;">
+                            Dinas Pendidikan Kabupaten Pamekasan terletak di <strong>Jalan Raya Proppo Kecamatan
+                                Pamekasan Kabupaten Pamekasan</strong>.
+                            Dinas Pendidikan mengelola lembaga mulai dari tingkat Pendidikan Anak Usia Dini (PAUD),
+                            Sekolah Dasar (SD), dan Sekolah Menengah Pertama (SMP), Pendidikan Masyarakat (Dikmas).
+                            Lembaga-lembaga ini tersebar di 13 kecamatan yang ada di Kabupaten Pamekasan.
+                        </p>
+                        <p class="lead text-center mt-3">
+                            Berikut adalah rangkuman data pendidikan untuk Tahun Ajaran 2023/2024.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="alert alert-info border-0 shadow-sm mb-5">
+                    <h5 class="fw-bold mb-3 text-center"><i class="bi bi-info-circle-fill"></i> Rangkuman Data
+                        Pendidikan (Tahun Ajaran 2023/2024)</h5>
+                    <div class="row g-4 text-center">
+                        <!-- PAUD -->
+                        <div class="col-md-4">
+                            <div class="bg-white p-3 rounded shadow-sm h-100">
+                                <h5 class="fw-bold text-primary">PAUD</h5>
+                                <ul class="list-unstyled text-start small mt-3 px-3">
+                                    <li class="mb-2"><i class="bi bi-building me-2"></i> 963 Lembaga</li>
+                                    <li class="mb-2"><i class="bi bi-people me-2"></i> 30.143 Siswa</li>
+                                    <li class="mb-2"><i class="bi bi-person-badge me-2"></i> 2.604 Guru</li>
+                                    <li><i class="bi bi-briefcase me-2"></i> 990 Tenaga Kependidikan</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <!-- SD -->
+                        <div class="col-md-4">
+                            <div class="bg-white p-3 rounded shadow-sm h-100">
+                                <h5 class="fw-bold text-success">SD</h5>
+                                <ul class="list-unstyled text-start small mt-3 px-3">
+                                    <li class="mb-2"><i class="bi bi-building me-2"></i> 477 Lembaga (411 Negeri / 66
+                                        Swasta)</li>
+                                    <li class="mb-2"><i class="bi bi-people me-2"></i> 57.711 Siswa</li>
+                                    <li class="mb-2"><i class="bi bi-person-badge me-2"></i> 4.566 Guru</li>
+                                    <li><i class="bi bi-briefcase me-2"></i> 981 Tenaga Kependidikan</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <!-- SMP -->
+                        <div class="col-md-4">
+                            <div class="bg-white p-3 rounded shadow-sm h-100">
+                                <h5 class="fw-bold text-danger">SMP</h5>
+                                <ul class="list-unstyled text-start small mt-3 px-3">
+                                    <li class="mb-2"><i class="bi bi-building me-2"></i> 182 Lembaga (34 Negeri / 148
+                                        Swasta)</li>
+                                    <li class="mb-2"><i class="bi bi-people me-2"></i> 20.868 Siswa</li>
+                                    <li class="mb-2"><i class="bi bi-person-badge me-2"></i> 1.797 Guru</li>
+                                    <li><i class="bi bi-briefcase me-2"></i> 418 Tenaga Kependidikan</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h5 class="fw-bold">Lainnya</h5>
+                <p><strong>Pendidikan Kesetaraan</strong>: Program pendidikan non-formal yang menyelenggarakan
+                    pendidikan umum setara SD/MI, SMP/MTs, dan SMA/MA yang mencakup program Paket A, Paket B, dan Paket
+                    C.</p>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="pb-4">
+        <div class="container">
+            <div class="pt-4 text-center text-dark opacity-75">
+                <small>&copy; Created by Eva Nuyung Yunita KP-UIM 2026</small>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/data.js"></script>
+    <!-- Visi Misi Modal -->
+    <div class="modal fade" id="visiMisiModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-bullseye me-2"></i> Visi & Misi</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="text-center mb-4">
+                        <h4 class="fw-bold text-success mb-3">Visi Pemerintah Kabupaten Pamekasan</h4>
+                        <p class="lead fst-italic bg-light p-3 rounded">"Pamekasan Sejahtera Melalui Pembangunan dari
+                            Bawah, Merata dan Berkelanjutan Berdasarkan Nilai – Nilai Agama"</p>
+                    </div>
+
+                    <div class="mt-4">
+                        <h4 class="fw-bold text-primary mb-3 text-center">Misi Pemerintah Kabupaten Pamekasan</h4>
+                        <ol class="list-group list-group-flush list-group-numbered fs-5">
+                            <li class="list-group-item border-0 bg-transparent py-2">Penguatan kualitas Sumber Daya
+                                Manusia</li>
+                            <li class="list-group-item border-0 bg-transparent py-2">Perekonomian Inklusif yang Bertumpu
+                                pada Sektor Pertanian dan Didukung Percepatan Pembangunan Sektor Industri, Perdagangan
+                                dan Sektor Potensial Lainnya</li>
+                            <li class="list-group-item border-0 bg-transparent py-2">Peningkatan Tata Kelola
+                                Pemerintahan dan Pelayanan Publik</li>
+                            <li class="list-group-item border-0 bg-transparent py-2">Pemenuhan Kualitas Infrastruktur
+                                dasar yang Merata dan Berkelanjutan</li>
+                            <li class="list-group-item border-0 bg-transparent py-2">Pengelolaan Potensi Sosial, Nilai –
+                                nilai Budaya, Keagamaan, Kepemudaan dan Perempuan untuk Mewujudkan Masyarakat yang
+                                Harmonis serta sejahtera.</li>
+                        </ol>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/particles.js"></script>
+</body>
+
+</html>

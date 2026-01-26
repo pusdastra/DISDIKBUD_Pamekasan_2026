@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan - Admin PUSDASTRA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <style>
+        .sidebar {
+            width: 260px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            z-index: 1000;
+            transition: all 0.3s;
+        }
+
+        .main-content {
+            margin-left: 260px;
+            transition: all 0.3s;
+        }
+
+        @media (max-width: 991.98px) {
+            .sidebar {
+                margin-left: -260px;
+            }
+
+            .sidebar.active {
+                margin-left: 0;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+    <!-- Navbar Mobile -->
+    <nav class="navbar navbar-dark bg-dark d-lg-none sticky-top p-3">
+        <div class="d-flex w-100 justify-content-between align-items-center">
+            <span class="navbar-brand mb-0 h1">PUSDASTRA Admin</span>
+            <button class="btn btn-outline-light"
+                onclick="document.getElementById('sidebar').classList.toggle('active')">
+                <i class="bi bi-list"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <div class="sidebar d-flex flex-column p-3 bg-dark" id="sidebar">
+        <a href="../index.html"
+            class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none border-bottom border-secondary pb-3 w-100">
+            <i class="bi bi-speedometer2 fs-4 me-2"></i><span class="fs-5 fw-bold">Admin Panel</span>
+        </a>
+        <ul class="nav nav-pills flex-column mb-auto">
+            <li class="nav-item"><a href="dashboard.html" class="nav-link text-white"><i
+                        class="bi bi-house-door me-2"></i> Dashboard</a></li>
+            <li class="nav-item mt-3 text-white-50 small text-uppercase fw-bold ls-1">Master Data</li>
+            <li><a href="siswa.html" class="nav-link text-white"><i class="bi bi-people me-2"></i> Data Siswa</a></li>
+            <li><a href="prestasi.html" class="nav-link text-white"><i class="bi bi-trophy me-2"></i> Data Prestasi</a>
+            </li>
+            <li><a href="sekolah.html" class="nav-link text-white"><i class="bi bi-building me-2"></i> Data Sekolah</a>
+            </li>
+            <li class="nav-item mt-3 text-white-50 small text-uppercase fw-bold ls-1">Laporan & Setting</li>
+            <li><a href="laporan.html" class="nav-link active"><i class="bi bi-file-earmark-text me-2"></i> Laporan</a>
+            </li>
+            <li><a href="settings.html" class="nav-link text-white"><i class="bi bi-gear me-2"></i> Pengaturan</a></li>
+        </ul>
+    </div>
+
+    <main class="main-content p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="h3 fw-bold">Laporan & Export Data</h2>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="card-title mb-0 fw-bold">Rekap Prestasi Sekolah</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small">Cetak laporan rekapitulasi jumlah prestasi per sekolah dalam periode
+                            tertentu.</p>
+                        <form>
+                            <div class="mb-3">
+                                <label class="form-label">Periode</label>
+                                <select class="form-select">
+                                    <option>Tahun Ajaran 2025/2026</option>
+                                    <option>Tahun Ajaran 2024/2025</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Format</label>
+                                <div class="d-flex gap-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="format1" checked>
+                                        <label class="form-check-label"><i class="bi bi-file-pdf text-danger"></i>
+                                            PDF</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="format1">
+                                        <label class="form-check-label"><i class="bi bi-file-excel text-success"></i>
+                                            Excel</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-primary w-100"><i class="bi bi-download me-2"></i>
+                                Download Laporan</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="card-title mb-0 fw-bold">Rekap Prestasi Kecamatan</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small">Cetak laporan statistik prestasi berdasarkan wilayah kecamatan.</p>
+                        <form>
+                            <div class="mb-3">
+                                <label class="form-label">Kecamatan</label>
+                                <select class="form-select">
+                                    <option>Semua Kecamatan</option>
+                                    <option>Pamekasan</option>
+                                    <option>Proppo</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Tahun</label>
+                                <input type="number" class="form-control" value="2026">
+                            </div>
+                            <button type="button" class="btn btn-primary w-100"><i class="bi bi-download me-2"></i>
+                                Download Laporan</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

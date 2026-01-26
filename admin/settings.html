@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pengaturan - Admin PUSDASTRA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <style>
+        .sidebar {
+            width: 260px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            z-index: 1000;
+            transition: all 0.3s;
+        }
+
+        .main-content {
+            margin-left: 260px;
+            transition: all 0.3s;
+        }
+
+        @media (max-width: 991.98px) {
+            .sidebar {
+                margin-left: -260px;
+            }
+
+            .sidebar.active {
+                margin-left: 0;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+
+    <!-- Sidebar -->
+    <div class="sidebar d-flex flex-column p-3 bg-dark" id="sidebar">
+        <a href="../index.html"
+            class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none border-bottom border-secondary pb-3 w-100">
+            <i class="bi bi-speedometer2 fs-4 me-2"></i><span class="fs-5 fw-bold">Admin Panel</span>
+        </a>
+        <ul class="nav nav-pills flex-column mb-auto">
+            <li class="nav-item"><a href="dashboard.html" class="nav-link text-white"><i
+                        class="bi bi-house-door me-2"></i> Dashboard</a></li>
+            <li class="nav-item mt-3 text-white-50 small text-uppercase fw-bold ls-1">Master Data</li>
+            <li><a href="siswa.html" class="nav-link text-white"><i class="bi bi-people me-2"></i> Data Siswa</a></li>
+            <li><a href="prestasi.html" class="nav-link text-white"><i class="bi bi-trophy me-2"></i> Data Prestasi</a>
+            </li>
+            <li><a href="sekolah.html" class="nav-link text-white"><i class="bi bi-building me-2"></i> Data Sekolah</a>
+            </li>
+            <li class="nav-item mt-3 text-white-50 small text-uppercase fw-bold ls-1">Laporan & Setting</li>
+            <li><a href="laporan.html" class="nav-link text-white"><i class="bi bi-file-earmark-text me-2"></i>
+                    Laporan</a></li>
+            <li><a href="settings.html" class="nav-link active"><i class="bi bi-gear me-2"></i> Pengaturan</a></li>
+            <li class="mt-4"><button onclick="window.Auth.logout()"
+                    class="btn btn-outline-danger w-100 btn-sm">Logout</button></li>
+        </ul>
+    </div>
+
+    <main class="main-content p-4">
+        <h2 class="h3 fw-bold mb-4">Pengaturan Sistem</h2>
+
+        <!-- APPROVAL REQUESTS (Only Visible to Admin role, but for this demo visible to all logged in) -->
+        <div class="card border-0 shadow-sm mb-4 border-start border-warning border-4">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0 fw-bold text-warning"><i class="bi bi-exclamation-circle-fill me-2"></i>
+                    Permintaan Aktivasi Akun</h5>
+                <span class="badge bg-danger rounded-pill" id="pendingCount">0 Pending</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Nama Sekolah</th>
+                                <th>Email</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pendingTableBody">
+                            <!-- Dynamic -->
+                        </tbody>
+                    </table>
+                    <div id="pendingEmpty" class="text-center py-4 text-muted">
+                        Tidak ada permintaan baru.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Section -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0 fw-bold">Profil Pengguna</h5>
+            </div>
+            <div class="card-body">
+                <form>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Nama Lengkap</label>
+                            <input type="text" class="form-control" id="profileName" disabled>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="profileEmail" disabled>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Simulasi Email -->
+    <div class="modal fade" id="emailModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title"><i class="bi bi-envelope-check-fill me-2"></i> Simulasi Email Terkirim</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info small mb-3">
+                        <i class="bi bi-info-circle me-1"></i> Karena ini versi demo (tanpa server), sistem akan
+                        mensimulasikan pengiriman email.
+                    </div>
+                    <div class="border rounded p-3 bg-light">
+                        <div class="d-flex mb-2">
+                            <span class="text-muted w-25">Kepada:</span>
+                            <strong id="modalEmailTo">user@sekolah.sch.id</strong>
+                        </div>
+                        <div class="d-flex mb-2">
+                            <span class="text-muted w-25">Subjek:</span>
+                            <span>Aktivasi Akun PUSDASTRA Berhasil</span>
+                        </div>
+                        <hr class="my-2">
+                        <p class="small text-muted mb-0" style="white-space: pre-line;" id="modalEmailBody">
+                            Isi pesan...
+                        </p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                    <button type="button" class="btn btn-primary" onclick="confirmEmailAction()"><i
+                            class="bi bi-send"></i> Kirim (Mailto)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/js/data.js"></script>
+    <script>
+        // Check Auth
+        const session = window.Auth.check();
+        if (!session) window.location.href = '../login.html';
+
+        document.getElementById('profileName').value = session.name;
+        document.getElementById('profileEmail').value = session.email;
+
+        // Global State
+        let targetEmail = '';
+
+        // Load Pending Users
+        function renderPending() {
+            const list = window.Auth.getPendingUsers();
+            const tbody = document.getElementById('pendingTableBody');
+            const empty = document.getElementById('pendingEmpty');
+            const countBadge = document.getElementById('pendingCount');
+
+            // Only show for Admin logic could be here, but showing for demo
+
+            tbody.innerHTML = '';
+            countBadge.innerText = list.length + ' Pending';
+
+            if (list.length === 0) {
+                empty.classList.remove('d-none');
+            } else {
+                empty.classList.add('d-none');
+                list.forEach(user => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="ps-4 fw-bold">${user.name}</td>
+                        <td>${user.email}</td>
+                        <td><span class="badge bg-warning text-dark">Menunggu</span></td>
+                        <td>
+                            <button onclick="approve('${user.email}')" class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i> Setujui</button>
+                            <button onclick="reject('${user.email}')" class="btn btn-sm btn-outline-danger"><i class="bi bi-x-lg"></i></button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        }
+
+        function approve(email) {
+            targetEmail = email;
+
+            // Show Simulation Modal
+            const body = `Yth. Operator Sekolah,\n\nAkun PUSDASTRA Anda telah disetujui.\nSilahkan login menggunakan email: ${email}\n\nTerima Kasih.`;
+
+            document.getElementById('modalEmailTo').innerText = email;
+            document.getElementById('modalEmailBody').innerText = body;
+
+            new bootstrap.Modal(document.getElementById('emailModal')).show();
+        }
+
+        function confirmEmailAction() {
+            // Processing
+            window.Auth.approveUser(targetEmail);
+
+            // Optional: Trigger Mailto for real usage feel
+            const subject = encodeURIComponent("Aktivasi Akun PUSDASTRA Berhasil");
+            const body = encodeURIComponent(document.getElementById('modalEmailBody').innerText);
+            window.location.href = `mailto:${targetEmail}?subject=${subject}&body=${body}`;
+
+            // Close & Reload
+            const modalEl = document.getElementById('emailModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+
+            renderPending();
+            // alert('Akun berhasil diaktifkan!');
+        }
+
+        function reject(email) {
+            if (confirm('Tolak permintaan ini?')) {
+                window.Auth.rejectUser(email);
+                renderPending();
+            }
+        }
+
+        renderPending();
+    </script>
+</body>
+
+</html>

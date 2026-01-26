@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin - PUSDASTRA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <style>
+        .sidebar {
+            width: 260px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            z-index: 1000;
+            transition: all 0.3s;
+        }
+
+        .main-content {
+            margin-left: 260px;
+            transition: all 0.3s;
+        }
+
+        @media (max-width: 991.98px) {
+            .sidebar {
+                margin-left: -260px;
+            }
+
+            .sidebar.active {
+                margin-left: 0;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+
+    <!-- Video Background -->
+    <video autoplay muted loop id="video-bg">
+        <source src="../assets/hero-video.mp4" type="video/mp4">
+    </video>
+
+    <!-- Mobile Button -->
+    <nav class="navbar navbar-dark bg-transparent d-lg-none sticky-top p-3">
+        <div class="d-flex w-100 justify-content-between align-items-center">
+            <span class="navbar-brand mb-0 h1">PUSDASTRA Admin</span>
+            <button class="btn btn-outline-light"
+                onclick="document.getElementById('sidebar').classList.toggle('active')">
+                <i class="bi bi-list"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <div class="sidebar d-flex flex-column p-3" id="sidebar">
+        <a href="../index.html"
+            class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none border-bottom border-secondary pb-3 w-100">
+            <i class="bi bi-speedometer2 fs-4 me-2"></i><span class="fs-5 fw-bold">Admin Panel</span>
+        </a>
+        <ul class="nav nav-pills flex-column mb-auto">
+            <li class="nav-item">
+                <a href="dashboard.html" class="nav-link active" aria-current="page">
+                    <i class="bi bi-house-door me-2"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item mt-3 text-white-50 small text-uppercase fw-bold ls-1">Master Data</li>
+            <li><a href="siswa.html" class="nav-link text-white"><i class="bi bi-people me-2"></i> Data Siswa</a></li>
+            <li><a href="prestasi.html" class="nav-link text-white"><i class="bi bi-trophy me-2"></i> Data Prestasi</a>
+            </li>
+            <li><a href="sekolah.html" class="nav-link text-white"><i class="bi bi-building me-2"></i> Data Sekolah</a>
+            </li>
+            <li class="nav-item mt-3 text-white-50 small text-uppercase fw-bold ls-1">Laporan & Setting</li>
+            <li><a href="laporan.html" class="nav-link text-white"><i class="bi bi-file-earmark-text me-2"></i>
+                    Laporan</a></li>
+            <li>
+                <a href="settings.html" class="nav-link text-white position-relative">
+                    <i class="bi bi-gear me-2"></i> Pengaturan
+                    <span id="sidebarBadge"
+                        class="position-absolute top-50 end-0 translate-middle badge rounded-pill bg-danger d-none"
+                        style="margin-top: -10px; margin-right: 10px;">
+                        0
+                    </span>
+                </a>
+            </li>
+            <li class="mt-4"><button onclick="window.Auth.logout()"
+                    class="btn btn-outline-danger w-100 btn-sm">Logout</button></li>
+        </ul>
+        <div class="mt-auto border-top border-secondary pt-3">
+            <div class="d-flex align-items-center text-white">
+                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-2"
+                    style="width: 32px; height: 32px">A</div>
+                <strong id="adminNameDisplay">Admin</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content p-4">
+        <!-- Header -->
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+            <h1 class="h2">Dashboard Overview</h1>
+        </div>
+
+        <!-- Metric Cards -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="card h-100 border-0 shadow-sm text-dark">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="card-title mb-0">Total Siswa</h5>
+                            <i class="bi bi-people fs-4 text-secondary"></i>
+                        </div>
+                        <h2 class="fw-bold mb-0 text-dark" id="statSiswa">0</h2>
+                        <small class="text-muted">Data Terinput</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100 border-0 shadow-sm text-dark">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="card-title mb-0">Prestasi</h5>
+                            <i class="bi bi-trophy fs-4 text-secondary"></i>
+                        </div>
+                        <h2 class="fw-bold mb-0 text-dark" id="statPrestasi">0</h2>
+                        <small class="text-muted">Total Penghargaan</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100 border-0 shadow-sm text-dark">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="card-title mb-0">Sekolah</h5>
+                            <i class="bi bi-building fs-4 text-secondary"></i>
+                        </div>
+                        <h2 class="fw-bold mb-0 text-dark" id="statSekolah">0</h2>
+                        <small class="text-muted">Terdaftar</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Notification Toast -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header bg-warning">
+                <strong class="me-auto text-dark"><i class="bi bi-bell-fill"></i> Pendaftaran Baru</strong>
+                <small class="text-dark">Baru saja</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                Ada <strong id="toastCount">0</strong> sekolah menunggu verifikasi akun. Silahkan cek menu Pengaturan.
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/js/data.js"></script>
+    <script src="../assets/js/particles.js"></script>
+    <script>
+        // Check Auth
+        const session = window.Auth.check();
+        if (!session) window.location.href = '../login.html';
+
+        document.getElementById('adminNameDisplay').innerText = session.name || session.username;
+
+        // Load Stats from Data Engine
+        const stats = window.DataStore.getStats();
+
+        document.getElementById('statSiswa').innerText = stats.totalSiswa;
+        document.getElementById('statPrestasi').innerText = stats.totalPrestasi;
+        document.getElementById('statSekolah').innerText = stats.totalSekolah;
+
+        // Check Pending Users (Notification Logic)
+        const pendingUsers = window.Auth.getPendingUsers();
+        if (pendingUsers.length > 0) {
+            // Update Sidebar Badge
+            const badge = document.getElementById('sidebarBadge');
+            badge.innerText = pendingUsers.length;
+            badge.classList.remove('d-none');
+
+            // Show Toast
+            const toastEl = document.getElementById('liveToast');
+            document.getElementById('toastCount').innerText = pendingUsers.length;
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+        }
+    </script>
+</body>
+
+</html>

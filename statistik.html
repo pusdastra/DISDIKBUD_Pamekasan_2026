@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistik Prestasi - PUSDASTRA</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body>
+
+    <!-- Video Background -->
+    <video autoplay muted loop id="video-bg">
+        <source src="assets/hero-video.mp4" type="video/mp4">
+    </video>
+
+    <!-- Top Bar -->
+    <div class="top-bar d-none d-lg-block">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+                <span><i class="bi bi-whatsapp text-success me-1"></i> 0851-9615-7474</span>
+                <span><i class="bi bi-envelope text-primary me-1"></i> disdikbud@pamekasankab.go.id</span>
+            </div>
+            <div>
+                <a href="https://www.facebook.com/search/top?q=disdikbud%20pamekasan" target="_blank"
+                    title="Facebook"><i class="fab fa-facebook text-glow-shine"></i></a>
+                <a href="https://www.instagram.com/dispendikpamekasan?igsh=bWdnbzF3ajA4YWgw_IG" target="_blank"
+                    title="Instagram"><i class="fab fa-instagram text-glow-shine"></i></a>
+                <a href="https://youtube.com/@disdikbudpamekasan?si=dREjynNqjl29ebF" target="_blank" title="YouTube"><i
+                        class="fab fa-youtube text-glow-shine"></i></a>
+                <a href="https://www.tiktok.com/@disdikbud.pamekasan?_r=1&_t=ZS-931ZNzQeYdQ_tiktok" target="_blank"
+                    title="TikTok"><i class="fab fa-tiktok text-glow-shine"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top shadow-sm">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="index.html">
+                <img src="assets/logo.png" alt="Logo" height="55" class="me-3">
+                <div style="line-height: 1.2;">
+                    <span class="d-block fw-bold text-success fs-4" style="letter-spacing: 1px;">PUSDASTRA</span>
+                    <small class="d-block text-secondary fw-bold" style="font-size: 0.7rem;">
+                        PUSAT DATA PRESTASI SISWA<br>DINAS PENDIDIKAN DAN KEBUDAYAAN
+                    </small>
+                </div>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Beranda</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="statistik.html">Statistik</a></li>
+                    <li class="nav-item"><a class="nav-link" href="prestasi.html">Daftar Prestasi</a></li>
+                    <li class="nav-item"><a class="nav-link" href="about.html">Tentang</a></li>
+                    <li class="nav-item"><a class="nav-link" href="contact.html">Kontak</a></li>
+                    <li class="nav-item ms-lg-3">
+                        <a href="login.html" class="btn btn-primary px-4 rounded-pill">Login</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="bg-white py-5 shadow-sm mb-4">
+        <div class="container text-center">
+            <h1 class="fw-bold text-dark mb-2">Statistik Prestasi</h1>
+            <p class="text-muted">Data visualisasi perkembangan prestasi siswa di seluruh wilayah.</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container py-4">
+        <!-- Top Cards -->
+        <div class="row g-4 mb-5">
+            <div class="col-md-3">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="display-5 fw-bold text-primary mb-2" id="statTotalPrestasi">0</div>
+                        <div class="text-muted">Total Prestasi</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="display-5 fw-bold text-success mb-2" id="statTotalSekolah">0</div>
+                        <div class="text-muted">Sekolah Terdaftar</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="display-5 fw-bold text-info mb-2">12</div>
+                        <div class="text-muted">Kecamatan</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="display-5 fw-bold text-warning mb-2">2026</div>
+                        <div class="text-muted">Tahun Ajaran Aktif</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row 1 -->
+        <div class="row g-4 mb-4">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="card-title mb-0 fw-bold">Tren Prestasi per Tahun</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="chartYearly" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="card-title mb-0 fw-bold">Perbandingan Jenjang</h5>
+                    </div>
+                    <div class="card-body d-flex align-items-center justify-content-center">
+                        <div style="width: 100%;">
+                            <canvas id="chartJenjang"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row 2 -->
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="card-title mb-0 fw-bold">Prestasi per Tingkat Lomba</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="chartTingkat"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="card-title mb-0 fw-bold">Top 5 Sekolah Berprestasi</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush" id="topSchoolsList">
+                            <li class="list-group-item text-center text-muted">Belum ada data sekolah.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-5 pb-4">
+        <div class="container text-center pt-5 text-dark opacity-75">
+            <small>&copy; Created by Eva Nuyung Yunita KP-UIM 2026</small>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/data.js"></script>
+    <script src="assets/js/particles.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        // Connect to Data Engine
+        document.addEventListener("DOMContentLoaded", () => {
+            const stats = window.DataStore.getStats();
+
+            // Update Top Cards
+            document.getElementById('statTotalPrestasi').innerText = stats.totalPrestasi;
+            document.getElementById('statTotalSekolah').innerText = stats.totalSekolah;
+            // For demo, assume hardcoded values for Kecamatan/Tahun if not in DB, 
+            // but user asked to "Delete All", so we should probably zero them or keep them static if they aren't in DB.
+            // Let's keep Kecamatan/Tahun static as they are config data, not user data. 
+            // OR set them to 0 if they represent data. 
+            // Users usually mean "User Input Data". 
+            // Let's zero out the "Input" related ones.
+
+            // Charts - Initialize with Real Data (Empty for now)
+            updateCharts(stats);
+        });
+
+        function updateCharts(stats) {
+            // Yearly Trend - Mocking it based on total (since we don't have dates in simple DB)
+            const ctxYearly = document.getElementById('chartYearly');
+            new Chart(ctxYearly, {
+                type: 'line',
+                data: {
+                    labels: ['2022', '2023', '2024', '2025', '2026'],
+                    datasets: [{
+                        label: 'Jumlah Prestasi',
+                        data: [0, 0, 0, 0, stats.totalPrestasi], // Show current total in 2026
+                        borderColor: '#0d6efd',
+                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { display: false } } }
+            });
+
+            // Jenjang Pie
+            const ctxJenjang = document.getElementById('chartJenjang');
+            new Chart(ctxJenjang, {
+                type: 'doughnut',
+                data: {
+                    labels: ['SD', 'SMP', 'SMA/SMK'],
+                    datasets: [{
+                        data: [0, 0, 0], // Zeroed out
+                        backgroundColor: ['#0d6efd', '#198754', '#ffc107'],
+                    }]
+                },
+                options: { responsive: true }
+            });
+
+            // Tingkat Bar
+            const ctxTingkat = document.getElementById('chartTingkat');
+            new Chart(ctxTingkat, {
+                type: 'bar',
+                data: {
+                    labels: ['Kecamatan', 'Kabupaten', 'Provinsi', 'Nasional', 'Internasional'],
+                    datasets: [{
+                        label: 'Jumlah',
+                        data: [0, 0, 0, 0, 0], // Zeroed out
+                        backgroundColor: '#0dcaf0',
+                        borderRadius: 5
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { display: false } } }
+            });
+        }
+    </script>
+</body>
+
+</html>

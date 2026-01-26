@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PUSDASTRA - Pusat Data Prestasi</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body>
+
+    <!-- Video Background -->
+    <video autoplay muted loop id="video-bg">
+        <source src="assets/hero-video.mp4" type="video/mp4">
+    </video>
+
+    <!-- Top Bar -->
+    <div class="top-bar d-none d-lg-block">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+                <span><i class="bi bi-whatsapp text-success me-1"></i> 0851-9615-7474</span>
+                <span><i class="bi bi-envelope text-primary me-1"></i> disdikbud@pamekasankab.go.id</span>
+            </div>
+            <div>
+                <a href="https://www.facebook.com/search/top?q=disdikbud%20pamekasan" target="_blank"
+                    title="Facebook"><i class="fab fa-facebook text-glow-shine"></i></a>
+                <a href="https://www.instagram.com/dispendikpamekasan?igsh=bWdnbzF3ajA4YWgw_IG" target="_blank"
+                    title="Instagram"><i class="fab fa-instagram text-glow-shine"></i></a>
+                <a href="https://youtube.com/@disdikbudpamekasan?si=dREjynNqjl29ebF" target="_blank" title="YouTube"><i
+                        class="fab fa-youtube text-glow-shine"></i></a>
+                <a href="https://www.tiktok.com/@disdikbud.pamekasan?_r=1&_t=ZS-931ZNzQeYdQ_tiktok" target="_blank"
+                    title="TikTok"><i class="fab fa-tiktok text-glow-shine"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top shadow-sm">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="index.html">
+                <img src="assets/logo.png" alt="Logo" height="55" class="me-3">
+                <div style="line-height: 1.2;">
+                    <span class="d-block fw-bold text-success fs-4" style="letter-spacing: 1px;">PUSDASTRA</span>
+                    <small class="d-block text-secondary fw-bold" style="font-size: 0.7rem;">
+                        PUSAT DATA PRESTASI SISWA<br>DINAS PENDIDIKAN DAN KEBUDAYAAN
+                    </small>
+                </div>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Beranda</a></li>
+                    <li class="nav-item"><a class="nav-link" href="statistik.html">Statistik</a></li>
+                    <li class="nav-item"><a class="nav-link" href="prestasi.html">Daftar Prestasi</a></li>
+                    <li class="nav-item"><a class="nav-link" href="about.html">Tentang</a></li>
+                    <li class="nav-item"><a class="nav-link" href="contact.html">Kontak</a></li>
+                    <li class="nav-item ms-lg-2">
+                        <a href="login.html" class="btn btn-primary px-4 rounded-pill">Login</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 mb-4 mb-lg-0">
+                    <h1 class="display-4 fw-bold mb-3">
+                        Pusat Data Prestasi <br>Siswa & Sekolah
+                    </h1>
+                    <p class="lead mb-4 opacity-90">
+                        Platform terintegrasi untuk mendata, mengelola, dan mempublikasikan jejak prestasi akademik
+                        maupun non-akademik di seluruh wilayah.
+                    </p>
+
+                    <!-- Year Badge (Moved Here) -->
+                    <div class="year-badge-container mb-4">
+                        2026 / 2027
+                    </div>
+
+                    <div class="d-flex gap-3">
+                        <a href="prestasi.html" class="btn btn-warning btn-lg px-4 fw-bold shadow">Lihat Prestasi</a>
+                        <a href="statistik.html" class="btn btn-outline-dark btn-lg px-4 shadow">Statistik Data</a>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="hero-stats p-4 rounded-4"
+                        style="background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.6);">
+                        <div class="row g-3 text-center">
+                            <div class="col-4">
+                                <h3 class="fw-bold text-warning" id="heroStatPrestasi">0</h3>
+                                <small class="fw-bold">Total Prestasi</small>
+                            </div>
+                            <div class="col-4 border-start border-dark border-opacity-25">
+                                <h3 class="fw-bold text-warning" id="heroStatSekolah">0</h3>
+                                <small class="fw-bold">Sekolah</small>
+                            </div>
+                            <div class="col-4 border-start border-dark border-opacity-25">
+                                <h3 class="fw-bold text-warning" id="heroStatSiswa">0</h3>
+                                <small class="fw-bold">Siswa</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Highlights / Features (Static Info) -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row text-center mb-5">
+                <div class="col-lg-8 mx-auto">
+                    <h2 class="fw-bold">Fitur Unggulan</h2>
+                    <p class="text-muted">Memudahkan pengelolaan dan akses data prestasi pendidikan.</p>
+                </div>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card card-hover h-100 p-4 text-center">
+                        <div class="mb-3">
+                            <i class="bi bi-bar-chart-fill fs-1 text-primary"></i>
+                        </div>
+                        <h4 class="card-title fw-bold">Data Realtime</h4>
+                        <p class="card-text text-muted">Pantau perkembangan prestasi siswa secara langsung melalui
+                            dashboard statistik yang interaktif.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card card-hover h-100 p-4 text-center">
+                        <div class="mb-3">
+                            <i class="bi bi-shield-check fs-1 text-success"></i>
+                        </div>
+                        <h4 class="card-title fw-bold">Validasi Data</h4>
+                        <p class="card-text text-muted">Sistem verifikasi berjenjang memastikan keabsahan setiap
+                            sertifikat dan data prestasi yang diinput.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card card-hover h-100 p-4 text-center">
+                        <div class="mb-3">
+                            <i class="bi bi-file-earmark-pdf-fill fs-1 text-danger"></i>
+                        </div>
+                        <h4 class="card-title fw-bold">Export Laporan</h4>
+                        <p class="card-text text-muted">Unduh rekapitulasi data prestasi per sekolah, kecamatan, atau
+                            periode dalam format PDF dan Excel.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="pb-4">
+        <div class="container">
+            <div class="pt-4 text-center text-dark opacity-75">
+                <small>&copy; Created by Eva Nuyung Yunita KP-UIM 2026</small>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/data.js"></script>
+    <script src="assets/js/particles.js"></script>
+    <script>
+        // Update Stats from Data Engine
+        const stats = window.DataStore.getStats();
+        function animateNumber(elementId, target) {
+            const el = document.getElementById(elementId);
+            el.innerText = target; // Simplified for robustness
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            animateNumber('heroStatPrestasi', stats.totalPrestasi);
+            animateNumber('heroStatSekolah', stats.totalSekolah);
+            animateNumber('heroStatSiswa', stats.totalSiswa);
+        });
+    </script>
+</body>
+
+</html>
