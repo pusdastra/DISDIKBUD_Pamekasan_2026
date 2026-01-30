@@ -23,7 +23,7 @@
         <div class="container d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center gap-3">
                 <span><i class="bi bi-whatsapp text-success me-1"></i> 0851-9615-7474</span>
-                <span><i class="bi bi-envelope text-primary me-1"></i> disdikbud@pamekasankab.go.id</span>
+                <span><i class="bi bi-envelope text-primary me-1"></i> disdikbudpamekasan08@gmail.com</span>
             </div>
             <div>
                 <a href="https://www.facebook.com/search/top?q=disdikbud%20pamekasan" target="_blank"
@@ -136,6 +136,7 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th class="ps-4 py-3">Nama Siswa</th>
+                                        <th class="py-3">Asal Sekolah</th>
                                         <th class="py-3">Kejuaraan</th>
                                         <th class="py-3">Tingkat</th>
                                         <th class="py-3">Tahun</th>
@@ -163,8 +164,13 @@
 
     <!-- Footer -->
     <footer class="mt-5 pb-4">
-        <div class="container text-center pt-5 text-dark opacity-75">
-            <small>&copy; Created by Eva Nuyung Yunita KP-UIM 2026</small>
+        <div class="container">
+            <div class="py-3 text-center">
+                <span class="bg-white text-dark px-4 py-2 rounded-pill shadow-sm fw-bold border"
+                    style="font-size: 0.85rem;">
+                    &copy; Created by Eva_Nuyung_Yunita KP-UIM 2026
+                </span>
+            </div>
         </div>
     </footer>
 
@@ -201,19 +207,22 @@
 
             if (list.length > 0) {
                 tbody.innerHTML = '';
+                // Helper to get year from date
                 list.forEach((p, index) => {
+                    const year = p.tanggal ? p.tanggal.substring(0, 4) : '-';
+
                     const row = `
                         <tr>
                             <td class="ps-4">
-                                <div class="fw-bold">${p.siswaName}</div>
-                                <small class="text-muted">${p.school}</small>
+                                <div class="fw-bold">${p.siswa}</div>
+                                <small class="text-muted">${p.school || '-'}</small>
                             </td>
                             <td>
-                                <div>${p.eventName}</div>
-                                <small class="text-warning"><i class="bi bi-trophy-fill"></i> Juara ${p.rank}</small>
+                                <div>${p.lomba}</div>
+                                <small class="text-warning"><i class="bi bi-trophy-fill"></i> ${p.peringkat}</small>
                             </td>
-                            <td><span class="badge bg-${getBadgeColor(p.level)}">${p.level}</span></td>
-                            <td>${p.year}</td>
+                            <td><span class="badge bg-${getBadgeColor(p.tingkat)}">${p.tingkat}</span></td>
+                            <td>${year}</td>
                             <td><button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="showDetail(${index})">Detail</button></td>
                         </tr>
                     `;
@@ -237,29 +246,31 @@
             const p = list[index];
             const modalBody = document.getElementById('modalContent');
 
+            const year = p.tanggal ? p.tanggal.substring(0, 4) : '-';
+
             modalBody.innerHTML = `
                 <div class="text-center mb-4">
                     <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3"
-                        style="width: 80px; height: 80px; font-size: 2rem;">${p.siswaName.charAt(0)}</div>
-                    <h4 class="fw-bold mb-1">${p.siswaName}</h4>
-                    <p class="text-muted mb-0">${p.school}</p>
+                        style="width: 80px; height: 80px; font-size: 2rem;">${p.siswa.charAt(0)}</div>
+                    <h4 class="fw-bold mb-1">${p.siswa}</h4>
+                    <p class="text-muted mb-0">${p.school || '-'}</p>
                 </div>
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item d-flex justify-content-between px-0">
                         <span class="text-muted">Lomba</span>
-                        <span class="fw-medium">${p.eventName}</span>
+                        <span class="fw-medium">${p.lomba}</span>
                     </li>
                     <li class="list-group-item d-flex justify-content-between px-0">
                         <span class="text-muted">Tingkat</span>
-                        <span class="badge bg-${getBadgeColor(p.level)}">${p.level}</span>
+                        <span class="badge bg-${getBadgeColor(p.tingkat)}">${p.tingkat}</span>
                     </li>
                     <li class="list-group-item d-flex justify-content-between px-0">
                         <span class="text-muted">Capaian</span>
-                        <span class="fw-bold text-warning"><i class="bi bi-trophy-fill"></i> Juara ${p.rank}</span>
+                        <span class="fw-bold text-warning"><i class="bi bi-trophy-fill"></i> ${p.peringkat}</span>
                     </li>
                      <li class="list-group-item d-flex justify-content-between px-0">
                         <span class="text-muted">Tahun</span>
-                        <span class="fw-medium">${p.year}</span>
+                        <span class="fw-medium">${year}</span>
                     </li>
                 </ul>
              `;

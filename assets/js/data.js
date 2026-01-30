@@ -4,16 +4,16 @@
  * V2: Added Email Login & Admin Approval Workflow
  */
 
-const DB_KEY = 'PUSDASTRA_DB_V4'; // Version bump to wipe data (Clean Slate)
+const DB_KEY = 'PUSDASTRA_DB_V5'; // Version bump to wipe data (Clean Slate)
 const SESSION_KEY = 'PUSDASTRA_SESSION';
 
 // Default / Initial Data
 const seedData = {
     users: [
         {
-            email: 'zaniraasukses@gmail.com',
+            email: 'disdikbudpamekasan08@gmail.com',
             username: 'admin',
-            password: 'admin',
+            password: 'Disdikbud2026',
             name: 'Super Admin Disdikbud',
             role: 'admin',
             status: 'active',
@@ -65,7 +65,7 @@ window.Auth = {
         db.users.push(newUser);
         saveDB(db);
 
-        return { success: true, message: 'Pendaftaran berhasil! Notifikasi verifikasi telah otomatis dikirim ke <b>zaniraasukses@gmail.com</b>. Silahkan tunggu persetujuan.' };
+        return { success: true, message: 'Pendaftaran berhasil! Notifikasi verifikasi telah otomatis dikirim ke <b>disdikbudpamekasan08@gmail.com</b>. Silahkan tunggu persetujuan.' };
     },
 
     // 2. Login (Checks Email & Active Status)

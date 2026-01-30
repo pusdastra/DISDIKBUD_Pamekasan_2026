@@ -86,6 +86,7 @@
                             <tr>
                                 <th>Tanggal</th>
                                 <th>Nama Siswa</th>
+                                <th>Asal Sekolah</th>
                                 <th>Lomba/Kegiatan</th>
                                 <th>Tingkat</th>
                                 <th>Peringkat</th>
@@ -117,11 +118,15 @@
                 <div class="modal-body">
                     <form id="addPrestasiForm">
                         <div class="row mb-3">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label">Nama Siswa</label>
                                 <input type="text" id="inputSiswa" class="form-control" required>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
+                                <label class="form-label">Asal Sekolah</label>
+                                <input type="text" id="inputSekolah" class="form-control" required>
+                            </div>
+                            <div class="col-md-4">
                                 <label class="form-label">Tanggal</label>
                                 <input type="date" id="inputTanggal" class="form-control" required>
                             </div>
@@ -205,6 +210,7 @@
                     tr.innerHTML = `
                         <td>${item.tanggal}</td>
                         <td class="fw-bold">${item.siswa}</td>
+                        <td>${item.school || '-'}</td>
                         <td>${item.lomba}</td>
                         <td><span class="badge bg-info text-dark">${item.tingkat}</span></td>
                         <td>${item.peringkat}</td>
@@ -236,6 +242,7 @@
             if (!data) return;
 
             document.getElementById('inputSiswa').value = data.siswa;
+            document.getElementById('inputSekolah').value = data.school || '';
             document.getElementById('inputTanggal').value = data.tanggal;
             document.getElementById('inputLomba').value = data.lomba;
             document.getElementById('inputTingkat').value = data.tingkat;
@@ -281,6 +288,7 @@
             // Core data
             const newData = {
                 siswa: document.getElementById('inputSiswa').value,
+                school: document.getElementById('inputSekolah').value,
                 tanggal: document.getElementById('inputTanggal').value,
                 lomba: document.getElementById('inputLomba').value,
                 tingkat: document.getElementById('inputTingkat').value,
