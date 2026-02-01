@@ -27,8 +27,8 @@
                 <span><i class="bi bi-envelope text-primary me-1"></i> disdikbudpamekasan08@gmail.com</span>
             </div>
             <div>
-                <a href="https://www.facebook.com/search/top?q=disdikbud%20pamekasan" target="_blank"
-                    title="Facebook"><i class="fab fa-facebook text-glow-shine"></i></a>
+                <a href="https://www.facebook.com/profile.php?id=100076864329057" target="_blank" title="Facebook"><i
+                        class="fab fa-facebook text-glow-shine"></i></a>
                 <a href="https://www.instagram.com/dispendikpamekasan?igsh=bWdnbzF3ajA4YWgw_IG" target="_blank"
                     title="Instagram"><i class="fab fa-instagram text-glow-shine"></i></a>
                 <a href="https://youtube.com/@disdikbudpamekasan?si=dREjynNqjl29ebF" target="_blank" title="YouTube"><i
@@ -116,7 +116,7 @@
                     <hr>
                     <h5 class="fw-bold mb-3">Sosial Media</h5>
                     <div class="d-flex gap-3 fs-4">
-                        <a href="https://www.facebook.com/search/top?q=disdikbud%20pamekasan" target="_blank"
+                        <a href="https://www.facebook.com/profile.php?id=100076864329057" target="_blank"
                             class="text-primary"><i class="fab fa-facebook"></i></a>
                         <a href="https://www.instagram.com/dispendikpamekasan?igsh=bWdnbzF3ajA4YWgw_IG" target="_blank"
                             class="text-danger"><i class="fab fa-instagram"></i></a>
@@ -140,20 +140,20 @@
                     </div>
 
                     <h4 class="fw-bold mb-3">Kirim Pesan</h4>
-                    <form>
+                    <form id="contactForm">
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-bold small">Nama Lengkap</label>
-                                <input type="text" class="form-control" placeholder="Nama Anda">
+                                <input type="text" class="form-control" placeholder="Nama Anda" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold small">Email / No. HP</label>
-                                <input type="text" class="form-control" placeholder="Kontak">
+                                <input type="text" class="form-control" placeholder="Kontak" required>
                             </div>
                             <div class="col-12">
                                 <label class="form-label fw-bold small">Pesan</label>
-                                <textarea class="form-control" rows="3"
-                                    placeholder="Tulis pesan Anda disini..."></textarea>
+                                <textarea class="form-control" rows="3" placeholder="Tulis pesan Anda disini..."
+                                    required></textarea>
                             </div>
                             <div class="col-12">
                                 <button type="submit" class="btn btn-primary px-5 fw-bold">Kirim Pesan</button>
@@ -178,7 +178,34 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/data.js"></script>
     <script src="assets/js/particles.js"></script>
+    <script>
+        document.getElementById('contactForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            // Get Values
+            const name = this.querySelector('input[placeholder="Nama Anda"]').value;
+            const contact = this.querySelector('input[placeholder="Kontak"]').value;
+            const message = this.querySelector('textarea').value;
+            const date = new Date().toLocaleString('id-ID');
+
+            // Save to Secure Inbox
+            const msgData = {
+                name: name,
+                contact: contact,
+                message: message,
+                date: date,
+                isRead: false
+            };
+            window.DataStore.saveMessage(msgData);
+
+            // Simulate sending to specific admin
+            const adminEmail = 'disdikbudpamekasan08@gmail.com';
+            alert(`Pesan TERKIRIM!\n\nPesan Anda telah diamankan dan dikirim langsung ke Kotak Masuk Admin Utama:\n${adminEmail}\n\nTerima kasih telah menghubungi kami.`);
+            this.reset();
+        });
+    </script>
 </body>
 
 </html>

@@ -174,6 +174,29 @@ window.DataStore = {
         saveDB(db);
     },
 
+    // New: Messaging System
+    getMessages: function () { return loadDB().messages || []; },
+    saveMessage: function (msgData) {
+        const db = loadDB();
+        if (!db.messages) db.messages = [];
+        db.messages.push(msgData);
+        saveDB(db);
+    },
+    deleteMessage: function (index) {
+        const db = loadDB();
+        if (db.messages && db.messages[index]) {
+            db.messages.splice(index, 1);
+            saveDB(db);
+        }
+    },
+    toggleMessageStatus: function (index) {
+        const db = loadDB();
+        if (db.messages && db.messages[index]) {
+            db.messages[index].isRead = !db.messages[index].isRead;
+            saveDB(db);
+        }
+    },
+
     getStats: function () {
         const db = loadDB();
         return {

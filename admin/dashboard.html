@@ -90,6 +90,14 @@
                     </span>
                 </a>
             </li>
+
+            <!-- SECURE INBOX (Hidden by default) -->
+            <li id="inboxMenu" class="d-none mt-2">
+                <a href="#inboxSection" class="nav-link text-warning fw-bold border border-warning rounded">
+                    <i class="bi bi-envelope-fill me-2"></i> Kotak Masuk
+                    <span id="msgBadge" class="badge bg-light text-dark ms-1">0</span>
+                </a>
+            </li>
             <li class="mt-4"><button onclick="window.Auth.logout()"
                     class="btn btn-outline-danger w-100 btn-sm">Logout</button></li>
         </ul>
@@ -107,6 +115,38 @@
         <!-- Header -->
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
             <h1 class="h2">Dashboard Overview</h1>
+        </div>
+
+        <!-- SECURE INBOX SECTION (Hidden by default) -->
+        <div id="inboxSection" class="card border-0 shadow-sm mb-4 d-none border-start border-warning border-4">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0 fw-bold text-dark"><i class="bi bi-inbox-fill me-2 text-warning"></i> Kotak
+                    Masuk (Secure)</h5>
+                <button class="btn btn-sm btn-outline-secondary" onclick="location.reload()"><i
+                        class="bi bi-arrow-clockwise"></i> Refresh</button>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th class="ps-4" style="width: 20%;">Tanggal</th>
+                                <th style="width: 20%;">Nama</th>
+                                <th style="width: 20%;">Kontak</th>
+                                <th>Pesan</th>
+                                <th style="width: 15%;" class="text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inboxTableBody">
+                            <!-- Dynamic Messages -->
+                        </tbody>
+                    </table>
+                    <div id="inboxEmpty" class="text-center py-5 text-muted">
+                        <i class="bi bi-envelope-open" style="font-size: 2rem;"></i>
+                        <p class="mt-2">Belum ada pesan masuk.</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Metric Cards -->
@@ -182,18 +222,93 @@
         document.getElementById('statSekolah').innerText = stats.totalSekolah;
 
         // Check Pending Users (Notification Logic)
+        // Check Pending Users (Notification Logic) - STRICT PRIVACY FOR ADMIN ONLY
         const pendingUsers = window.Auth.getPendingUsers();
-        if (pendingUsers.length > 0) {
+        // Only show if logged in as the specific Super Admin
+        if (session.email === 'disdikbudpamekasan08@gmail.com' && pendingUsers.length > 0) {
             // Update Sidebar Badge
             const badge = document.getElementById('sidebarBadge');
-            badge.innerText = pendingUsers.length;
-            badge.classList.remove('d-none');
+            if (badge) {
+                badge.innerText = pendingUsers.length;
+                badge.classList.remove('d-none');
+            }
 
             // Show Toast
             const toastEl = document.getElementById('liveToast');
-            document.getElementById('toastCount').innerText = pendingUsers.length;
-            const toast = new bootstrap.Toast(toastEl);
-            toast.show();
+            if (toastEl) {
+                document.getElementById('toastCount').innerText = pendingUsers.length;
+                const toast = new bootstrap.Toast(toastEl);
+                toast.show();
+            }
+        }
+
+        // --- SECURE INBOX LOGIC ---
+        // Only specific Admin can see messages
+        if (session.email === 'disdikbudpamekasan08@gmail.com') {
+            const inboxMenu = document.getElementById('inboxMenu');
+            const inboxSection = document.getElementById('inboxSection');
+            const msgBadge = document.getElementById('msgBadge');
+            const tbody = document.getElementById('inboxTableBody');
+            const empty = document.getElementById('inboxEmpty');
+
+            // Show UI
+            if (inboxMenu) inboxMenu.classList.remove('d-none');
+            if (inboxSection) inboxSection.classList.remove('d-none');
+
+            function renderInbox() {
+                const messages = window.DataStore.getMessages();
+                if (msgBadge) msgBadge.innerText = messages.filter(m => !m.isRead).length; // Badge counts unread only
+
+                if (messages.length > 0) {
+                    if (empty) empty.classList.add('d-none');
+                    tbody.innerHTML = '';
+
+                    // Show newest first, but keep original index for deletion
+                    // We map to add original index, then reverse
+                    messages.map((msg, idx) => ({ ...msg, originalIndex: idx })).reverse().forEach(msg => {
+                        const rowClass = msg.isRead ? 'bg-light text-muted' : 'fw-bold';
+                        const checkIcon = msg.isRead ? 'bi-check-circle-fill text-success' : 'bi-check-circle';
+                        const checkTitle = msg.isRead ? 'Tandai Belum Dibaca' : 'Tandai Sudah Dibaca';
+
+                        const row = `
+                            <tr class="${rowClass}">
+                                <td class="ps-4 small">${msg.date}</td>
+                                <td>${msg.name}</td>
+                                <td>${msg.contact}</td>
+                                <td>${msg.message}</td>
+                                <td class="text-center">
+                                    <button onclick="toggleMsg(${msg.originalIndex})" class="btn btn-sm btn-outline-success me-1" title="${checkTitle}">
+                                        <i class="bi ${checkIcon}"></i>
+                                    </button>
+                                    <button onclick="deleteMsg(${msg.originalIndex})" class="btn btn-sm btn-outline-danger" title="Hapus Pesan">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                        tbody.innerHTML += row;
+                    });
+                } else {
+                    if (empty) empty.classList.remove('d-none');
+                    tbody.innerHTML = '';
+                }
+            }
+
+            // Expose actions to global scope
+            window.toggleMsg = function (index) {
+                window.DataStore.toggleMessageStatus(index);
+                renderInbox();
+            };
+
+            window.deleteMsg = function (index) {
+                if (confirm('Apakah Anda yakin ingin menghapus pesan ini?')) {
+                    window.DataStore.deleteMessage(index);
+                    renderInbox();
+                }
+            };
+
+            // Initial Render
+            renderInbox();
         }
     </script>
 </body>

@@ -42,8 +42,13 @@
 
 <body class="bg-light">
 
+    <!-- Video Background -->
+    <video autoplay muted loop id="video-bg">
+        <source src="../assets/hero-video.mp4" type="video/mp4">
+    </video>
+
     <!-- Sidebar -->
-    <div class="sidebar d-flex flex-column p-3 bg-dark" id="sidebar">
+    <div class="sidebar d-flex flex-column p-3" id="sidebar">
         <a href="../index.html"
             class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none border-bottom border-secondary pb-3 w-100">
             <i class="bi bi-speedometer2 fs-4 me-2"></i><span class="fs-5 fw-bold">Admin Panel</span>
@@ -177,12 +182,22 @@
             const empty = document.getElementById('pendingEmpty');
             const countBadge = document.getElementById('pendingCount');
 
-            // Only show for Admin logic could be here, but showing for demo
+            // STRICT PRIVACY: Only Super Admin can see pending requests
+            // Check if session email is the specific admin email
+            const session = window.Auth.check();
+            if (session.email !== 'disdikbudpamekasan08@gmail.com') {
+                tbody.innerHTML = '';
+                if (countBadge) countBadge.innerText = '';
+                empty.innerHTML = '<div class="text-danger fw-bold p-3 bg-white rounded border border-danger"><i class="bi bi-lock-fill me-2"></i> Akses Terbatas. Hanya Admin Utama yang dapat memverifikasi akun.</div>';
+                empty.classList.remove('d-none');
+                return;
+            }
 
             tbody.innerHTML = '';
             countBadge.innerText = list.length + ' Pending';
 
             if (list.length === 0) {
+                empty.innerText = 'Tidak ada permintaan baru.';
                 empty.classList.remove('d-none');
             } else {
                 empty.classList.add('d-none');
@@ -241,6 +256,7 @@
 
         renderPending();
     </script>
+    <script src="../assets/js/particles.js"></script>
 </body>
 
 </html>
