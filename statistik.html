@@ -124,7 +124,8 @@
             <div class="col-lg-8">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-header bg-white py-3">
-                        <h5 class="card-title mb-0 fw-bold">Tren Prestasi per Tahun</h5>
+                        <h5 class="card-title mb-0 fw-bold">Tren Prestasi (Grafik Tahunan)</h5>
+                        <small class="text-muted">Menampilkan jumlah prestasi yang diraih setiap tahun</small>
                     </div>
                     <div class="card-body">
                         <canvas id="chartYearly" height="300"></canvas>
@@ -192,72 +193,168 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <script>
-        // Connect to Data Engine
-        document.addEventListener("DOMContentLoaded", () => {
-            const stats = window.DataStore.getStats();
+    <script type="module">
+        import { DataStore } from './assets/js/data.js';
 
-            // Update Top Cards
-            document.getElementById('statTotalPrestasi').innerText = stats.totalPrestasi;
-            document.getElementById('statTotalSekolah').innerText = stats.totalSekolah;
-            // For demo, assume hardcoded values for Kecamatan/Tahun if not in DB, 
-            // but user asked to "Delete All", so we should probably zero them or keep them static if they aren't in DB.
-            // Let's keep Kecamatan/Tahun static as they are config data, not user data. 
-            // OR set them to 0 if they represent data. 
-            // Users usually mean "User Input Data". 
-            // Let's zero out the "Input" related ones.
+        document.addEventListener("DOMContentLoaded", async () => {
+            try {
+                // Fetch Data
+                const prestasiList = await DataStore.getPrestasi();
+                const sekolahList = await DataStore.getSekolah(); // If needed for total count
 
-            // Charts - Initialize with Real Data (Empty for now)
-            updateCharts(stats);
+                // Update Top Cards
+                animateValue("statTotalPrestasi", 0, prestasiList.length, 2000);
+                animateValue("statTotalSekolah", 0, sekolahList.length, 2000);
+
+                // Process Data for Charts
+                const stats = processStats(prestasiList);
+
+                // Render Charts
+                renderCharts(stats);
+                renderTopSchools(stats.topSchools);
+
+            } catch (error) {
+                console.error("Error loading stats:", error);
+            }
         });
 
-        function updateCharts(stats) {
-            // Yearly Trend - Mocking it based on total (since we don't have dates in simple DB)
-            const ctxYearly = document.getElementById('chartYearly');
-            new Chart(ctxYearly, {
-                type: 'line',
-                data: {
-                    labels: ['2022', '2023', '2024', '2025', '2026'],
-                    datasets: [{
-                        label: 'Jumlah Prestasi',
-                        data: [0, 0, 0, 0, stats.totalPrestasi], // Show current total in 2026
-                        borderColor: '#0d6efd',
-                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    }]
-                },
-                options: { responsive: true, plugins: { legend: { display: false } } }
+        function animateValue(id, start, end, duration) {
+            if (start === end) return;
+            const obj = document.getElementById(id);
+            if (!obj) return;
+            const range = end - start;
+            let current = start;
+            const increment = end > start ? 1 : -1;
+            const stepTime = Math.abs(Math.floor(duration / range));
+
+            const timer = setInterval(function () {
+                current += increment;
+                obj.innerText = current;
+                if (current == end) {
+                    clearInterval(timer);
+                }
+            }, stepTime);
+        }
+
+        function processStats(data) {
+            const years = {};
+            const jenjang = { 'SD': 0, 'SMP': 0, 'PAUD': 0 };
+            const tingkat = { 'Kecamatan': 0, 'Kabupaten': 0, 'Provinsi': 0, 'Nasional': 0, 'Internasional': 0 };
+            const schools = {};
+
+            data.forEach(p => {
+                // Year
+                const y = p.tanggal ? p.tanggal.substring(0, 4) : 'Unknown';
+                if (y !== 'Unknown') years[y] = (years[y] || 0) + 1;
+
+                // Jenjang (Infer from School Name)
+                const sName = (p.sekolah || p.school || '').toUpperCase();
+                if (sName.includes('SD') || sName.includes('MI')) jenjang['SD']++;
+                else if (sName.includes('SMP') || sName.includes('MTS')) jenjang['SMP']++;
+                else if (sName.includes('PAUD') || sName.includes('TK') || sName.includes('KB') || sName.includes('RA')) jenjang['PAUD']++;
+
+                // Tingkat
+                const t = p.tingkat || 'Unknown';
+                if (tingkat[t] !== undefined) tingkat[t]++;
+
+                // Top Schools
+                const cleanSchool = p.sekolah || p.school || 'Unknown';
+                schools[cleanSchool] = (schools[cleanSchool] || 0) + 1;
             });
+
+            // Sort Top Schools
+            const sortedSchools = Object.entries(schools)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+
+            return { years, jenjang, tingkat, topSchools: sortedSchools };
+        }
+
+        function renderCharts(stats) {
+            // Yearly Trend
+            const yearLabels = Object.keys(stats.years).sort();
+            const yearData = yearLabels.map(y => stats.years[y]);
+
+            if (document.getElementById('chartYearly')) {
+                new Chart(document.getElementById('chartYearly'), {
+                    type: 'line',
+                    data: {
+                        labels: yearLabels,
+                        datasets: [{
+                            label: 'Jumlah Prestasi',
+                            data: yearData,
+                            borderColor: '#0d6efd',
+                            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: { responsive: true, plugins: { legend: { display: false } } }
+                });
+            }
 
             // Jenjang Pie
-            const ctxJenjang = document.getElementById('chartJenjang');
-            new Chart(ctxJenjang, {
-                type: 'doughnut',
-                data: {
-                    labels: ['SD', 'SMP', 'PAUD'],
-                    datasets: [{
-                        data: [0, 0, 0], // Zeroed out
-                        backgroundColor: ['#0d6efd', '#198754', '#ffc107'],
-                    }]
-                },
-                options: { responsive: true }
-            });
+            if (document.getElementById('chartJenjang')) {
+                new Chart(document.getElementById('chartJenjang'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['SD', 'SMP', 'PAUD'],
+                        datasets: [{
+                            data: [stats.jenjang['SD'], stats.jenjang['SMP'], stats.jenjang['PAUD']],
+                            backgroundColor: ['#0d6efd', '#198754', '#ffc107'],
+                        }]
+                    },
+                    options: { responsive: true }
+                });
+            }
 
             // Tingkat Bar
-            const ctxTingkat = document.getElementById('chartTingkat');
-            new Chart(ctxTingkat, {
-                type: 'bar',
-                data: {
-                    labels: ['Kecamatan', 'Kabupaten', 'Provinsi', 'Nasional', 'Internasional'],
-                    datasets: [{
-                        label: 'Jumlah',
-                        data: [0, 0, 0, 0, 0], // Zeroed out
-                        backgroundColor: '#0dcaf0',
-                        borderRadius: 5
-                    }]
-                },
-                options: { responsive: true, plugins: { legend: { display: false } } }
+            if (document.getElementById('chartTingkat')) {
+                new Chart(document.getElementById('chartTingkat'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['Kecamatan', 'Kabupaten', 'Provinsi', 'Nasional', 'Internasional'],
+                        datasets: [{
+                            label: 'Jumlah',
+                            data: [
+                                stats.tingkat['Kecamatan'],
+                                stats.tingkat['Kabupaten'],
+                                stats.tingkat['Provinsi'],
+                                stats.tingkat['Nasional'],
+                                stats.tingkat['Internasional']
+                            ],
+                            backgroundColor: ['#0dcaf0', '#0d6efd', '#198754', '#ffc107', '#dc3545'],
+                            borderRadius: 5
+                        }]
+                    },
+                    options: { responsive: true, plugins: { legend: { display: false } } }
+                });
+            }
+        }
+
+        function renderTopSchools(topList) {
+            const container = document.getElementById('topSchoolsList');
+            if (!container) return;
+
+            if (topList.length === 0) {
+                container.innerHTML = '<li class="list-group-item text-center text-muted">Belum ada data sekolah.</li>';
+                return;
+            }
+
+            container.innerHTML = '';
+            topList.forEach((item, index) => {
+                const [name, count] = item;
+                const badgeColor = index === 0 ? 'warning' : (index === 1 ? 'secondary' : 'light');
+                const html = `
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                             <i class="bi bi-trophy-fill text-${index < 3 ? 'warning' : 'muted'} me-2"></i>
+                             ${name}
+                        </div>
+                        <span class="badge bg-primary rounded-pill">${count}</span>
+                    </li>
+                `;
+                container.innerHTML += html;
             });
         }
     </script>

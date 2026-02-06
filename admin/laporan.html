@@ -68,7 +68,7 @@
             <li class="nav-item"><a href="dashboard.html" class="nav-link text-white"><i
                         class="bi bi-house-door me-2"></i> Dashboard</a></li>
             <li class="nav-item mt-3 text-white-50 small text-uppercase fw-bold ls-1">Master Data</li>
-            <li><a href="siswa.html" class="nav-link text-white"><i class="bi bi-people me-2"></i> Data Siswa</a></li>
+            <!-- <li><a href="siswa.html" class="nav-link text-white"><i class="bi bi-people me-2"></i> Data Siswa</a></li> -->
             <li><a href="prestasi.html" class="nav-link text-white"><i class="bi bi-trophy me-2"></i> Data Prestasi</a>
             </li>
             <li><a href="sekolah.html" class="nav-link text-white"><i class="bi bi-building me-2"></i> Data Sekolah</a>
@@ -152,8 +152,133 @@
         </div>
     </main>
 
+    <!-- Libraries for Export -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../assets/js/particles.js"></script>
-</body>
+
+    <script type="module">
+        import { DataStore, Auth } from '../assets/js/data.js';
+
+        // Check Auth
+        const session = Auth.check();
+        if (!session) window.location.href = '../login.html';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Handle Download Button Click for "Rekap Prestasi Sekolah"
+            const btnDownload1 = document.querySelector('.card:nth-child(1) button.btn-primary');
+            if (btnDownload1) {
+                btnDownload1.addEventListener('click', async () => {
+                    const originalText = btnDownload1.innerHTML;
+                    btnDownload1.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+                    btnDownload1.disabled = true;
+
+                    try {
+                        const format = document.querySelector('input[name="format1"]:checked').parentElement.textContent.trim();
+                        const data = await DataStore.getPrestasi(); // Fetch all data
+
+                        // Logic: Group by School or just dump list? 
+                        // Title says "Rekap Prestasi Sekolah", implying a summary or full list.
+                        // Let's do a full list for now as it's most useful.
+
+                        if (format.includes('Excel')) {
+                            exportExcel(data, "Laporan_Prestasi");
+                        } else {
+                            exportPDF(data, "Laporan_Prestasi");
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        alert("Gagal mendownload: " + e.message);
+                    } finally {
+                        btnDownload1.innerHTML = originalText;
+                        btnDownload1.disabled = false;
+                    }
+                });
+            }
+
+            // Handle Download Button Click for "Rekap Prestasi Kecamatan"
+            // (Reusing same logic for simplicity, could filter later)
+            const btnDownload2 = document.querySelector('.card:nth-child(2) button.btn-primary');
+            if (btnDownload2) {
+                btnDownload2.addEventListener('click', async () => {
+                    const originalText = btnDownload2.innerHTML;
+                    btnDownload2.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+                    btnDownload2.disabled = true;
+
+                    try {
+                        const data = await DataStore.getPrestasi();
+                        // Here we could filter by kecamatan if that data existed in the object.
+                        // For now exporting full list.
+                        exportExcel(data, "Laporan_Prestasi_Wilayah");
+                    } catch (e) {
+                        console.error(e);
+                        alert("Gagal mendownload: " + e.message);
+                    } finally {
+                        btnDownload2.innerHTML = originalText;
+                        btnDownload2.disabled = false;
+                    }
+                });
+            }
+        });
+
+        function exportExcel(data, filename) {
+            // Prepare Data
+            const rows = data.map(item => ({
+                "Tanggal": item.tanggal,
+                "Nama Siswa": item.nama || item.siswa,
+                "Sekolah": item.sekolah || item.school,
+                "Lomba": item.lomba,
+                "Tingkat": item.tingkat,
+                "Peringkat": item.peringkat
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(rows);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Data Prestasi");
+
+            // Fix width
+            const wscols = [
+                { wch: 15 }, { wch: 25 }, { wch: 25 }, { wch: 25 }, { wch: 15 }, { wch: 15 }
+            ];
+            worksheet['!cols'] = wscols;
+
+            XLSX.writeFile(workbook, `${filename}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        }
+
+        function exportPDF(data, filename) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.text("Laporan Data Prestasi PUSDASTRA", 14, 15);
+            doc.setFontSize(10);
+            doc.text(`Dicetak pada: ${new Date().toLocaleDateString()}`, 14, 22);
+
+            const tableColumn = ["Tanggal", "Siswa", "Sekolah", "Lomba", "Tingkat", "Peringkat"];
+            const tableRows = [];
+
+            data.forEach(item => {
+                const row = [
+                    item.tanggal,
+                    item.nama || item.siswa,
+                    item.sekolah || item.school,
+                    item.lomba,
+                    item.tingkat,
+                    item.peringkat
+                ];
+                tableRows.push(row);
+            });
+
+            doc.autoTable({
+                head: [tableColumn],
+                body: tableRows,
+                startY: 25,
+            });
+
+            doc.save(`${filename}_${new Date().toISOString().slice(0, 10)}.pdf`);
+        }
+    </script>
 
 </html>

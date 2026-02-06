@@ -57,7 +57,7 @@
             <li class="nav-item"><a href="dashboard.html" class="nav-link text-white"><i
                         class="bi bi-house-door me-2"></i> Dashboard</a></li>
             <li class="nav-item mt-3 text-white-50 small text-uppercase fw-bold ls-1">Master Data</li>
-            <li><a href="siswa.html" class="nav-link text-white"><i class="bi bi-people me-2"></i> Data Siswa</a></li>
+            <!-- <li><a href="siswa.html" class="nav-link text-white"><i class="bi bi-people me-2"></i> Data Siswa</a></li> -->
             <li><a href="prestasi.html" class="nav-link active"><i class="bi bi-trophy me-2"></i> Data Prestasi</a></li>
             <li><a href="sekolah.html" class="nav-link text-white"><i class="bi bi-building me-2"></i> Data Sekolah</a>
             </li>
@@ -139,9 +139,11 @@
                             <div class="col-md-4">
                                 <label class="form-label">Tingkat</label>
                                 <select id="inputTingkat" class="form-select">
+                                    <option>Kecamatan</option>
                                     <option>Kabupaten</option>
                                     <option>Provinsi</option>
                                     <option>Nasional</option>
+                                    <option>Internasional</option>
                                 </select>
                             </div>
                             <div class="col-md-4">
@@ -171,166 +173,236 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../assets/js/data.js"></script>
     <script src="../assets/js/particles.js"></script>
-    <script>
+    <script type="module">
+        import { DataStore, Auth } from '../assets/js/data.js';
+
+        // Expose to window for inline calls
+        window.DataStore = DataStore;
+        window.Auth = Auth;
+
         // Check Auth
-        if (!window.Auth.check()) window.location.href = '../login.html';
+        const session = Auth.check();
+        if (!session) window.location.href = '../login.html';
 
-        // Render
-        // Global state
+        // Global State
         let isEditing = false;
-        let editIndex = -1;
+        let editId = null;
 
-        // Initialize Global Functions
-        window.renderTable = renderTable;
-        window.deleteItem = deleteItem;
-        window.editItem = editItem;
-        window.viewBukti = viewBukti;
-
-        // Render
-        function renderTable() {
-            const data = window.DataStore.getPrestasi();
+        // Render Table
+        async function renderTable() {
             const tbody = document.getElementById('prestasiTableBody');
             const emptyState = document.getElementById('emptyState');
 
-            tbody.innerHTML = '';
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center">Memuat data...</td></tr>';
 
-            if (data.length === 0) {
-                emptyState.classList.remove('d-none');
-            } else {
-                emptyState.classList.add('d-none');
+            try {
+                let data = await DataStore.getPrestasi();
+
+                // --- ROLE BASED ACCESS CONTROL ---
+                if (session.role !== 'admin') {
+                    // Filter: Normalize both sides to be safe, though usually exact match expected.
+                    // Checking against both 'sekolah' and 'school' fields in data just in case.
+                    data = data.filter(item => {
+                        const sName = item.sekolah || item.school || '';
+                        return sName === session.school;
+                    });
+                }
+
+                tbody.innerHTML = '';
+                if (data.length === 0) {
+                    if (emptyState) emptyState.classList.remove('d-none');
+                    return;
+                }
+
+                if (emptyState) emptyState.classList.add('d-none');
+
                 data.forEach((item, index) => {
-                    const tr = document.createElement('tr');
+                    // Normalize data safely
+                    const siswaName = item.nama || item.siswa || '-';
+                    const sekolahName = item.sekolah || item.school || '-';
 
                     // Button logic for Bukti
                     let buktiBtn = '<span class="text-muted small">Tidak ada</span>';
                     if (item.bukti) {
-                        buktiBtn = `<button class="btn btn-sm btn-outline-primary" onclick="window.viewBukti(${index})"><i class="bi bi-download"></i> Lihat Bukti</button>`;
+                        buktiBtn = `<button class="btn btn-sm btn-outline-primary" onclick="viewBukti('${item.id}')"><i class="bi bi-download"></i> Lihat Bukti</button>`;
                     }
 
-                    tr.innerHTML = `
-                        <td>${item.tanggal}</td>
-                        <td class="fw-bold">${item.siswa}</td>
-                        <td>${item.school || '-'}</td>
-                        <td>${item.lomba}</td>
-                        <td><span class="badge bg-info text-dark">${item.tingkat}</span></td>
-                        <td>${item.peringkat}</td>
-                        <td>${buktiBtn}</td>
-                        <td>
-                            <button class="btn btn-sm btn-warning me-1" onclick="window.editItem(${index})"><i class="bi bi-pencil"></i></button>
-                            <button class="btn btn-sm btn-danger" onclick="window.deleteItem(${index})"><i class="bi bi-trash"></i></button>
-                        </td>
+                    const row = `
+                        <tr>
+                            <td>${item.tanggal || '-'}</td>
+                            <td class="fw-bold">${siswaName}</td>
+                            <td>${sekolahName}</td>
+                            <td>${item.lomba || '-'}</td>
+                            <td><span class="badge bg-info text-dark">${item.tingkat || '-'}</span></td>
+                            <td>${item.peringkat || '-'}</td>
+                            <td>${buktiBtn}</td>
+                            <td>
+                                <button class="btn btn-sm btn-warning me-1" onclick="editPrestasi('${item.id}')"><i class="bi bi-pencil"></i></button>
+                                <button class="btn btn-sm btn-danger" onclick="deletePrestasi('${item.id}')"><i class="bi bi-trash"></i></button>
+                            </td>
+                        </tr>
                     `;
-                    tbody.appendChild(tr);
+                    tbody.innerHTML += row;
                 });
+            } catch (error) {
+                console.error("Render Error:", error);
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Gagal memuat data.</td></tr>';
             }
         }
 
-        function deleteItem(index) {
-            if (confirm('Hapus data prestasi ini?')) {
+        // Global Actions attached to window
+        window.deletePrestasi = async function (id) {
+            if (confirm('Yakin ingin menghapus data ini?')) {
                 try {
-                    window.DataStore.deletePrestasi(index);
-                    alert('Data berhasil dihapus!');
+                    await DataStore.deletePrestasi(id);
                     renderTable();
                 } catch (e) {
-                    alert('Error: ' + e.message);
+                    alert('Gagal menghapus: ' + e.message);
                 }
             }
-        }
+        };
 
-        function editItem(index) {
-            const data = window.DataStore.getPrestasi()[index];
-            if (!data) return;
+        window.editPrestasi = async function (id) {
+            try {
+                const list = await DataStore.getPrestasi();
+                const data = list.find(d => d.id === id);
 
-            document.getElementById('inputSiswa').value = data.siswa;
-            document.getElementById('inputSekolah').value = data.school || '';
-            document.getElementById('inputTanggal').value = data.tanggal;
-            document.getElementById('inputLomba').value = data.lomba;
-            document.getElementById('inputTingkat').value = data.tingkat;
-            document.getElementById('inputPeringkat').value = data.peringkat;
-            // Note: File input cannot be pre-populated for security, user must re-upload if changing.
+                if (data) {
+                    // Security Check
+                    if (session.role !== 'admin') {
+                        const sName = data.sekolah || data.school || '';
+                        if (sName !== session.school) {
+                            alert("Anda tidak memiliki akses untuk mengedit data ini.");
+                            return;
+                        }
+                    }
 
-            isEditing = true;
-            editIndex = index;
+                    document.getElementById('inputSiswa').value = data.nama || data.siswa || '';
+                    document.getElementById('inputSekolah').value = data.sekolah || data.school || '';
+                    document.getElementById('inputTanggal').value = data.tanggal || '';
+                    document.getElementById('inputLomba').value = data.lomba || '';
+                    document.getElementById('inputTingkat').value = data.tingkat || 'Kabupaten';
+                    document.getElementById('inputPeringkat').value = data.peringkat || 'Juara 1';
 
-            document.querySelector('#addPrestasiModal .modal-title').innerText = 'Edit Prestasi';
-            document.querySelector('#addPrestasiModal button[type="submit"]').innerText = 'Update Prestasi';
+                    isEditing = true;
+                    editId = id;
 
-            const modal = new bootstrap.Modal(document.getElementById('addPrestasiModal'));
-            modal.show();
-        }
+                    document.querySelector('#addPrestasiModal .modal-title').innerText = 'Edit Prestasi';
+                    document.querySelector('#addPrestasiModal button[type="submit"]').innerText = 'Update Prestasi';
 
-        function viewBukti(index) {
-            const data = window.DataStore.getPrestasi()[index];
-            if (data && data.bukti) {
-                // Open base64 image in new tab
-                const win = window.open();
-                win.document.write('<iframe src="' + data.bukti + '" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>');
-            } else {
-                alert('Bukti tidak ditemukan.');
+                    new bootstrap.Modal(document.getElementById('addPrestasiModal')).show();
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Gagal memuat data untuk edit.");
             }
-        }
+        };
 
+        // Setup Modal for Non-Admin (Auto-fill School)
+        const modalEl = document.getElementById('addPrestasiModal');
+        modalEl.addEventListener('show.bs.modal', function () {
+            if (session.role !== 'admin') {
+                const schoolInput = document.getElementById('inputSekolah');
+                if (schoolInput) {
+                    schoolInput.value = session.school;
+                    schoolInput.readOnly = true;
+                }
+            }
+        });
+
+        window.viewBukti = async function (id) {
+            try {
+                const list = await DataStore.getPrestasi();
+                const data = list.find(d => d.id === id);
+                if (data && data.bukti) {
+                    const win = window.open();
+                    win.document.write('<iframe src="' + data.bukti + '" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>');
+                } else {
+                    alert('Bukti tidak ditemukan.');
+                }
+            } catch (e) { console.error(e); }
+        };
+
+        // Reset
         document.getElementById('addPrestasiModal').addEventListener('hidden.bs.modal', () => {
             document.getElementById('addPrestasiForm').reset();
             isEditing = false;
-            editIndex = -1;
+            editId = null;
             document.querySelector('#addPrestasiModal .modal-title').innerText = 'Input Prestasi Baru';
             document.querySelector('#addPrestasiModal button[type="submit"]').innerText = 'Simpan Prestasi';
         });
 
-        // Add/Update
-        document.getElementById('addPrestasiForm').addEventListener('submit', function (e) {
+        // Add/Update Submit
+        document.getElementById('addPrestasiForm').addEventListener('submit', async function (e) {
             e.preventDefault();
+
+            const btn = this.querySelector('button[type="submit"]');
+            const originalText = btn.innerText;
+            btn.disabled = true;
+            btn.innerText = 'Menyimpan...';
 
             const fileInput = document.getElementById('inputBukti');
             const file = fileInput.files[0];
 
-            // Core data
+            // Core data (aligned with Firestore Schema)
             const newData = {
-                siswa: document.getElementById('inputSiswa').value,
-                school: document.getElementById('inputSekolah').value,
+                nama: document.getElementById('inputSiswa').value, // Schema uses 'nama' for student name usually, or 'siswa'
+                siswa: document.getElementById('inputSiswa').value, // redundancy to be safe
+                sekolah: document.getElementById('inputSekolah').value,
                 tanggal: document.getElementById('inputTanggal').value,
                 lomba: document.getElementById('inputLomba').value,
                 tingkat: document.getElementById('inputTingkat').value,
                 peringkat: document.getElementById('inputPeringkat').value,
-                bukti: null // Default null
+                bukti: null,
+                createdAt: new Date().toISOString()
             };
 
-            // If editing, preserve old proof if no new file
-            if (isEditing) {
-                const oldData = window.DataStore.getPrestasi()[editIndex];
-                newData.bukti = oldData.bukti;
-            }
+            const processSave = async () => {
+                try {
+                    if (isEditing) {
+                        // If no new file, preserve old one. But we need to fetch old one first or trust backend? 
+                        // Simplest: Fetch old doc to get 'bukti' url if not provided.
+                        if (!newData.bukti) {
+                            const list = await DataStore.getPrestasi();
+                            const old = list.find(d => d.id === editId);
+                            if (old) newData.bukti = old.bukti;
+                        }
 
-            const saveAndClose = () => {
-                if (isEditing) {
-                    window.DataStore.updatePrestasi(editIndex, newData);
-                    alert('Data berhasil diupdate!');
-                } else {
-                    window.DataStore.addPrestasi(newData);
-                    alert('Data berhasil disimpan!');
+                        await DataStore.updatePrestasi(editId, newData);
+                        alert('Data berhasil diupdate!');
+                    } else {
+                        await DataStore.addPrestasi(newData);
+                        alert('Data berhasil disimpan!');
+                    }
+
+                    const modalEl = document.getElementById('addPrestasiModal');
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    modal.hide();
+
+                    renderTable();
+                } catch (err) {
+                    console.error("Save error", err);
+                    alert("Gagal menyimpan: " + err.message);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerText = originalText;
                 }
-
-                const modalEl = document.getElementById('addPrestasiModal');
-                let modal = bootstrap.Modal.getInstance(modalEl);
-                if (!modal) modal = new bootstrap.Modal(modalEl);
-                modal.hide();
-                renderTable();
             };
 
-            // Process File if exists
+            // Handle File
             if (file) {
                 const reader = new FileReader();
-                reader.onload = function (e) {
-                    newData.bukti = e.target.result; // Base64 string
-                    saveAndClose();
+                reader.onload = function (evt) {
+                    newData.bukti = evt.target.result; // Base64
+                    processSave();
                 };
                 reader.readAsDataURL(file);
             } else {
-                saveAndClose();
+                processSave();
             }
         });
 
+        // Init
         renderTable();
     </script>
 </body>

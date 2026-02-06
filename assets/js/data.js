@@ -1,242 +1,273 @@
-/**
- * PUSDASTRA Data Engine
- * Handles LocalStorage for Users, Siswa, Prestasi, and Sekolah
- * V2: Added Email Login & Admin Approval Workflow
- */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, query, where, updateDoc, doc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const DB_KEY = 'PUSDASTRA_DB_V5'; // Version bump to wipe data (Clean Slate)
-const SESSION_KEY = 'PUSDASTRA_SESSION';
-
-// Default / Initial Data
-const seedData = {
-    users: [
-        {
-            email: 'disdikbudpamekasan08@gmail.com',
-            username: 'admin',
-            password: 'Disdikbud2026',
-            name: 'Super Admin Disdikbud',
-            role: 'admin',
-            status: 'active',
-            school: 'PUSDASTRA Pusat'
-        }
-    ],
-    siswa: [],
-    prestasi: [],
-    sekolah: []
+// --- FIREBASE CONFIGURATION ---
+const firebaseConfig = {
+    apiKey: "AIzaSyDe3DfNqilhQ-CIoRpgFjpfbOOLZqt1Zdw",
+    authDomain: "pusdastra-disdikbud-2026.firebaseapp.com",
+    projectId: "pusdastra-disdikbud-2026",
+    storageBucket: "pusdastra-disdikbud-2026.firebasestorage.app",
+    messagingSenderId: "1091672034526",
+    appId: "1:1091672034526:web:3a7611170049172d9b464f"
 };
 
-// --- Core Helper Functions ---
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-function loadDB() {
-    const data = localStorage.getItem(DB_KEY);
-    if (!data) {
-        localStorage.setItem(DB_KEY, JSON.stringify(seedData));
-        return seedData;
-    }
-    return JSON.parse(data);
-}
+// Session Key for Browser (keeps user logged in locally)
+const SESSION_KEY = 'PUSDASTRA_SESSION';
 
-function saveDB(data) {
-    localStorage.setItem(DB_KEY, JSON.stringify(data));
-}
+// --- AUTHENTICATION (Firestore Based) ---
+export const Auth = {
+    // 1. Register
+    async register(email, schoolName, password) {
+        try {
+            // Check duplicate email
+            const q = query(collection(db, "users"), where("email", "==", email));
+            const querySnapshot = await getDocs(q);
 
-// --- Auth Functions ---
+            if (!querySnapshot.empty) {
+                return { success: false, message: 'Email sudah terdaftar.' };
+            }
 
-window.Auth = {
-    // 1. Register (Creates Pending Account)
-    register: function (email, schoolName, password) {
-        const db = loadDB();
+            // Create User Document
+            const isSuperAdmin = email === 'disdikbudpamekasan08@gmail.com';
 
-        // Check duplicate
-        if (db.users.find(u => u.email === email)) {
-            return { success: false, message: 'Email sudah terdaftar.' };
-        }
+            const newUser = {
+                email: email,
+                username: email.split('@')[0],
+                name: schoolName,
+                password: password, // Note: In production, hash this!
+                role: isSuperAdmin ? 'admin' : 'operator',
+                status: isSuperAdmin ? 'active' : 'pending',
+                school: schoolName,
+                createdAt: new Date().toISOString()
+            };
 
-        const newUser = {
-            email: email,
-            username: email.split('@')[0], // Generate simple username
-            name: schoolName,
-            password: password,
-            role: 'operator',
-            status: 'pending', // Key: Must be approved
-            school: schoolName
-        };
+            await addDoc(collection(db, "users"), newUser);
 
-        db.users.push(newUser);
-        saveDB(db);
-
-        return { success: true, message: 'Pendaftaran berhasil! Notifikasi verifikasi telah otomatis dikirim ke <b>disdikbudpamekasan08@gmail.com</b>. Silahkan tunggu persetujuan.' };
-    },
-
-    // 2. Login (Checks Email & Active Status)
-    login: function (email, password) {
-        const db = loadDB();
-        const user = db.users.find(u => u.email === email);
-
-        if (!user) return { success: false, message: 'Email tidak terdaftar.' };
-
-        if (user.status === 'pending') {
-            return { success: false, message: 'Akun Anda sedang dalam proses verifikasi Admin.' };
-        }
-        if (user.status === 'rejected') {
-            return { success: false, message: 'Maaf, pendaftaran akun ditolak.' };
-        }
-
-        if (user.password !== password) return { success: false, message: 'Password salah.' };
-
-        // Save Session
-        const sessionData = { email: user.email, name: user.name, role: user.role, school: user.school };
-        sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
-        return { success: true, user: sessionData };
-    },
-
-    // 3. Admin: Get Pending Users
-    getPendingUsers: function () {
-        const db = loadDB();
-        return db.users.filter(u => u.status === 'pending');
-    },
-
-    // 4. Admin: Approve User
-    approveUser: function (targetEmail) {
-        const db = loadDB();
-        const idx = db.users.findIndex(u => u.email === targetEmail);
-
-        if (idx === -1) return { success: false, message: 'User tidak ditemukan' };
-
-        db.users[idx].status = 'active';
-        saveDB(db);
-        return { success: true };
-    },
-
-    // 5. Admin: Reject User (Optional)
-    rejectUser: function (targetEmail) {
-        const db = loadDB();
-        const idx = db.users.findIndex(u => u.email === targetEmail);
-        if (idx !== -1) {
-            db.users[idx].status = 'rejected';
-            saveDB(db);
+            return {
+                success: true,
+                message: 'Pendaftaran berhasil! Notifikasi verifikasi telah otomatis dikirim ke <b>disdikbudpamekasan08@gmail.com</b>. Silahkan tunggu persetujuan.'
+            };
+        } catch (error) {
+            console.error("Register Error:", error);
+            return { success: false, message: 'Terjadi kesalahan sistem: ' + error.message };
         }
     },
 
-    check: function () {
+    // 2. Login
+    async login(email, password) {
+        try {
+            // --- SUPER ADMIN BYPASS / AUTO-BOOTSTRAP ---
+            // User requested "Permanent" login for this specific account
+            if (email === 'disdikbudpamekasan08@gmail.com' && password === 'Disdikbud2026') {
+                const q = query(collection(db, "users"), where("email", "==", email));
+                const querySnapshot = await getDocs(q);
+
+                let userId = "";
+
+                if (querySnapshot.empty) {
+                    // Auto-Create Super Admin in Cloud if not exists
+                    const newAdmin = {
+                        email: email,
+                        username: 'pusdastra_admin',
+                        name: 'PUSDASTRA Pusat',
+                        password: password,
+                        role: 'admin',
+                        status: 'active',
+                        school: 'Dinas Pendidikan',
+                        createdAt: new Date().toISOString()
+                    };
+                    const docRef = await addDoc(collection(db, "users"), newAdmin);
+                    userId = docRef.id;
+                } else {
+                    userId = querySnapshot.docs[0].id;
+                }
+
+                // Force Success Session
+                const sessionData = {
+                    uid: userId,
+                    email: email,
+                    name: 'PUSDASTRA Pusat',
+                    role: 'admin',
+                    school: 'Dinas Pendidikan'
+                };
+                sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
+                return { success: true, user: sessionData };
+            }
+
+            // --- NORMAL USER LOGIN ---
+            const q = query(collection(db, "users"), where("email", "==", email));
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) return { success: false, message: 'Email tidak terdaftar.' };
+
+            const userDoc = querySnapshot.docs[0];
+            const user = userDoc.data();
+            const userId = userDoc.id;
+
+            if (user.password !== password) return { success: false, message: 'Password salah.' };
+
+            if (user.status === 'pending') return { success: false, message: 'Akun Anda sedang dalam proses verifikasi Admin.' };
+            if (user.status === 'rejected') return { success: false, message: 'Maaf, pendaftaran akun ditolak.' };
+
+            // Save Session
+            const sessionData = {
+                uid: userId, // Firestore Doc ID
+                email: user.email,
+                name: user.name,
+                role: user.role,
+                school: user.school
+            };
+            sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
+            return { success: true, user: sessionData };
+
+        } catch (error) {
+            console.error("Login Error:", error);
+            return { success: false, message: 'Login Error: ' + error.message };
+        }
+    },
+
+    // 3. Get Pending Users (for Admin)
+    async getPendingUsers() {
+        const q = query(collection(db, "users"), where("status", "==", "pending"));
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    },
+
+    // 4. Approve User
+    async approveUser(email) {
+        // We find by email to be consistent, or pass ID ideally. 
+        // Allowing email lookup for backward compatibility with logic
+        const q = query(collection(db, "users"), where("email", "==", email));
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+            const docRef = snapshot.docs[0].ref;
+            await updateDoc(docRef, { status: 'active' });
+            return { success: true };
+        }
+        return { success: false, message: 'User not found' };
+    },
+
+    // 5. Reject User
+    async rejectUser(email) {
+        const q = query(collection(db, "users"), where("email", "==", email));
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+            const docRef = snapshot.docs[0].ref;
+            await updateDoc(docRef, { status: 'rejected' });
+            return { success: true };
+        }
+    },
+
+    // 6. Session Management
+    check() {
         const session = sessionStorage.getItem(SESSION_KEY);
         if (!session) return null;
         return JSON.parse(session);
     },
 
-    logout: function () {
+    logout() {
         sessionStorage.removeItem(SESSION_KEY);
         window.location.href = '../login.html';
-    },
-
-    // 6. Simulate Google Login (Passwordless for known emails)
-    loginWithGoogle: function (email) {
-        const db = loadDB();
-        const user = db.users.find(u => u.email === email);
-
-        if (!user) return { success: false, message: 'Email Google ini belum terdaftar di sistem.' };
-
-        if (user.status === 'pending') {
-            return { success: false, message: 'Akun Anda sedang dalam proses verifikasi Admin.' };
-        }
-        if (user.status === 'rejected') {
-            return { success: false, message: 'Maaf, pendaftaran akun ditolak.' };
-        }
-
-        // Bypass Password Check
-        const sessionData = { email: user.email, name: user.name, role: user.role, school: user.school };
-        sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
-        return { success: true, user: sessionData };
     }
 };
 
-// --- Data CRUD Functions (Same as before) ---
-
-window.DataStore = {
-    getSiswa: function () { return loadDB().siswa; },
-    addSiswa: function (siswaData) {
-        const db = loadDB();
-        db.siswa.push(siswaData);
-        saveDB(db);
+// --- DATASTORE (Firestore CRUD) ---
+export const DataStore = {
+    // SISWA
+    async getSiswa() {
+        const snapshot = await getDocs(collection(db, "siswa"));
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    },
+    async addSiswa(data) {
+        await addDoc(collection(db, "siswa"), data);
+    },
+    async updateSiswa(id, data) {
+        await updateDoc(doc(db, "siswa", id), data);
+    },
+    async deleteSiswa(id) {
+        await deleteDoc(doc(db, "siswa", id));
     },
 
-    getPrestasi: function () { return loadDB().prestasi; },
-    addPrestasi: function (prestasiData) {
-        const db = loadDB();
-        db.prestasi.push(prestasiData);
-        saveDB(db);
+    // PRESTASI
+    async getPrestasi() {
+        const snapshot = await getDocs(collection(db, "prestasi"));
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    },
+    async addPrestasi(data) {
+        await addDoc(collection(db, "prestasi"), data);
+    },
+    async updatePrestasi(id, data) {
+        await updateDoc(doc(db, "prestasi", id), data);
+    },
+    async deletePrestasi(id) {
+        await deleteDoc(doc(db, "prestasi", id));
     },
 
-    getSekolah: function () { return loadDB().sekolah; },
-    addSekolah: function (sekolahData) {
-        const db = loadDB();
-        db.sekolah.push(sekolahData);
-        saveDB(db);
+    // SEKOLAH
+    async getSekolah() {
+        const snapshot = await getDocs(collection(db, "sekolah"));
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    },
+    async addSekolah(data) {
+        await addDoc(collection(db, "sekolah"), data);
+    },
+    async updateSekolah(id, data) {
+        await updateDoc(doc(db, "sekolah", id), data);
+    },
+    async deleteSekolah(id) {
+        await deleteDoc(doc(db, "sekolah", id));
     },
 
-    // New: Messaging System
-    getMessages: function () { return loadDB().messages || []; },
-    saveMessage: function (msgData) {
-        const db = loadDB();
-        if (!db.messages) db.messages = [];
-        db.messages.push(msgData);
-        saveDB(db);
+    // MESSAGES (Secure Inbox)
+    async getMessages() {
+        const snapshot = await getDocs(collection(db, "messages"));
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     },
-    deleteMessage: function (index) {
-        const db = loadDB();
-        if (db.messages && db.messages[index]) {
-            db.messages.splice(index, 1);
-            saveDB(db);
-        }
+    async saveMessage(data) {
+        await addDoc(collection(db, "messages"), data);
     },
-    toggleMessageStatus: function (index) {
-        const db = loadDB();
-        if (db.messages && db.messages[index]) {
-            db.messages[index].isRead = !db.messages[index].isRead;
-            saveDB(db);
-        }
+    async toggleMessageStatus(id, currentStatus) {
+        await updateDoc(doc(db, "messages", id), { isRead: !currentStatus });
+    },
+    async deleteMessage(id) {
+        await deleteDoc(doc(db, "messages", id));
     },
 
-    getStats: function () {
-        const db = loadDB();
+    // STATISTICS
+    async getStats() {
+        // Note `getCountFromServer` is more efficient but requires newer SDK/Index. 
+        // For simplicity, we fetch docs. 
+        // Optimization: In real app, use aggregation queries.
+        const s = await getDocs(collection(db, "siswa"));
+        const p = await getDocs(collection(db, "prestasi"));
+        const sk = await getDocs(collection(db, "sekolah"));
+
         return {
-            totalSiswa: db.siswa.length,
-            totalPrestasi: db.prestasi.length,
-            totalSekolah: db.sekolah.length
+            totalSiswa: s.size,
+            totalPrestasi: p.size,
+            totalSekolah: sk.size
         };
     },
 
-    // Delete Functions
-    deleteSiswa: function (index) {
-        const db = loadDB();
-        db.siswa.splice(index, 1);
-        saveDB(db);
-    },
-    deletePrestasi: function (index) {
-        const db = loadDB();
-        db.prestasi.splice(index, 1);
-        saveDB(db);
-    },
-    deleteSekolah: function (index) {
-        const db = loadDB();
-        db.sekolah.splice(index, 1);
-        saveDB(db);
-    },
+    // DANGER ZONE
+    async resetSystemData() {
+        const resetCollection = async (colName) => {
+            const snapshot = await getDocs(collection(db, colName));
+            const promises = snapshot.docs.map(doc => deleteDoc(doc.ref));
+            await Promise.all(promises);
+        };
 
-    // Update Functions (Simple replace)
-    updateSiswa: function (index, newData) {
-        const db = loadDB();
-        db.siswa[index] = newData;
-        saveDB(db);
-    },
-    updatePrestasi: function (index, newData) {
-        const db = loadDB();
-        db.prestasi[index] = newData;
-        saveDB(db);
-    },
-    updateSekolah: function (index, newData) {
-        const db = loadDB();
-        db.sekolah[index] = newData;
-        saveDB(db);
+        await resetCollection("prestasi");
+        await resetCollection("sekolah");
+        // await resetCollection("siswa"); // Siswa not used explicitly but if migrated, clean it.
+        // We do NOT delete "users" to keep accounts alive.
     }
 };
+
+// Make available globally for inline scripts (optional, for backward compat if we map it)
+window.Auth = Auth;
+window.DataStore = DataStore;

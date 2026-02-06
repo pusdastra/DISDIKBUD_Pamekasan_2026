@@ -202,19 +202,37 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/data.js"></script>
     <script src="assets/js/particles.js"></script>
-    <script>
+    <script type="module">
+        import { DataStore } from './assets/js/data.js';
+
+        let allData = [];
+
         document.addEventListener("DOMContentLoaded", () => {
             loadPrestasiTable();
 
             // Filter Logic
             document.getElementById('filterForm').addEventListener('submit', (e) => {
                 e.preventDefault();
-                loadPrestasiTable();
+                applyFilters();
             });
         });
 
-        function loadPrestasiTable() {
-            let list = window.DataStore.getPrestasi();
+        async function loadPrestasiTable() {
+            const tbody = document.getElementById('prestasiTableBody');
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">Memuat data...</td></tr>';
+
+            try {
+                // Fetch from Firebase
+                allData = await DataStore.getPrestasi();
+                applyFilters(); // Initial render
+            } catch (error) {
+                console.error("Error loading prestasi:", error);
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-danger">Gagal memuat data.</td></tr>';
+            }
+        }
+
+        function applyFilters() {
+            let list = [...allData];
             const tbody = document.getElementById('prestasiTableBody');
 
             // Get Filter Values
@@ -234,26 +252,33 @@
             // Apply Filters
             if (search || yearFilter || tingkatFilter || jenjangPAUD || jenjangSD || jenjangSMP) {
                 list = list.filter(p => {
+                    // Normalize fields
+                    const pName = (p.nama || p.siswa || '').toLowerCase();
+                    const pSchool = (p.sekolah || p.school || '').toLowerCase();
+                    const pLomba = (p.lomba || '').toLowerCase();
+                    const pDate = p.tanggal || '';
+                    const pTingkat = p.tingkat || '';
+
                     // 1. Search
                     const matchSearch = !search ||
-                        (p.siswa && p.siswa.toLowerCase().includes(search)) ||
-                        (p.school && p.school.toLowerCase().includes(search)) ||
-                        (p.lomba && p.lomba.toLowerCase().includes(search));
+                        pName.includes(search) ||
+                        pSchool.includes(search) ||
+                        pLomba.includes(search);
 
                     // 2. Year
-                    const pYear = p.tanggal ? p.tanggal.substring(0, 4) : '';
+                    const pYear = pDate.substring(0, 4);
                     const matchYear = !yearFilter || pYear === yearFilter;
 
                     // 3. Tingkat
-                    const matchTingkat = !tingkatFilter || p.tingkat === tingkatFilter;
+                    const matchTingkat = !tingkatFilter || pTingkat === tingkatFilter;
 
-                    // 4. Jenjang (Logic: If any checked, match one of them. If none checked, match all)
+                    // 4. Jenjang
                     let matchJenjang = true;
                     if (jenjangPAUD || jenjangSD || jenjangSMP) {
-                        const schoolName = (p.school || '').toUpperCase();
-                        let isPAUD = jenjangPAUD && (schoolName.includes('PAUD') || schoolName.includes('TK') || schoolName.includes('KB') || schoolName.includes('RA') || schoolName.includes('TPA'));
-                        let isSD = jenjangSD && (schoolName.includes('SD') || schoolName.includes('MI'));
-                        let isSMP = jenjangSMP && (schoolName.includes('SMP') || schoolName.includes('MTS'));
+                        const schoolUpper = pSchool.toUpperCase();
+                        let isPAUD = jenjangPAUD && (schoolUpper.includes('PAUD') || schoolUpper.includes('TK') || schoolUpper.includes('KB') || schoolUpper.includes('RA'));
+                        let isSD = jenjangSD && (schoolUpper.includes('SD') || schoolUpper.includes('MI'));
+                        let isSMP = jenjangSMP && (schoolUpper.includes('SMP') || schoolUpper.includes('MTS'));
 
                         matchJenjang = isPAUD || isSD || isSMP;
                     }
@@ -262,27 +287,37 @@
                 });
             }
 
+            // Render
             if (list.length > 0) {
                 tbody.innerHTML = '';
-                // Helper to get year from date
                 list.forEach((p, index) => {
                     const year = p.tanggal ? p.tanggal.substring(0, 4) : '-';
+                    const siswaName = p.nama || p.siswa || '-';
+                    const sekolahName = p.sekolah || p.school || '-';
+
+                    // We use ID instead of index for detail if possible, but for simple view passing index of filtered list is risky if we go back to main list.
+                    // Better to pass the object explicitly or ID.
+                    // Let's use ID or just keep simple index of filtered list for now (view only).
+                    // Actually, let's attach data to the button to avoid scope issues.
+
+                    // But wait, 'showDetail' needs to be globally accessible if called via onclick string.
+                    // Since module scope is not global, we attach to window.
 
                     const row = `
                         <tr>
                             <td class="ps-4">
-                                <div class="fw-bold">${p.siswa}</div>
+                                <div class="fw-bold">${siswaName}</div>
                             </td>
                             <td>
-                                <div class="text-muted">${p.school || '-'}</div>
+                                <div class="text-muted">${sekolahName}</div>
                             </td>
                             <td>
-                                <div>${p.lomba}</div>
-                                <small class="text-warning"><i class="bi bi-trophy-fill"></i> ${p.peringkat}</small>
+                                <div>${p.lomba || '-'}</div>
+                                <small class="text-warning"><i class="bi bi-trophy-fill"></i> ${p.peringkat || '-'}</small>
                             </td>
-                            <td><span class="badge bg-${getBadgeColor(p.tingkat)}">${p.tingkat}</span></td>
+                            <td><span class="badge bg-${getBadgeColor(p.tingkat)}">${p.tingkat || '-'}</span></td>
                             <td>${year}</td>
-                            <td><button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="showDetail(${index})">Bukti</button></td>
+                            <td><button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="showDetail('${p.id}')">Bukti</button></td>
                         </tr>
                     `;
                     tbody.innerHTML += row;
@@ -300,21 +335,28 @@
             return 'secondary';
         }
 
-        function showDetail(index) {
-            const list = window.DataStore.getPrestasi();
-            const p = list[index];
-            const modalBody = document.getElementById('modalContent');
+        // Expose to window
+        window.showDetail = function (id) {
+            const p = allData.find(d => d.id === id);
+            if (!p) return;
 
-            // Update Title
+            const modalBody = document.getElementById('modalContent');
             const modalTitle = document.querySelector('#detailModal .modal-title');
             if (modalTitle) modalTitle.innerText = "Bukti Prestasi";
 
             if (p.bukti) {
-                modalBody.innerHTML = `
-                    <div class="d-flex justify-content-center align-items-center">
-                        <img src="${p.bukti}" class="img-fluid rounded shadow-sm border" alt="Bukti Prestasi" style="max-height: 80vh; max-width: 100%;">
-                    </div>
-                `;
+                // Check if PDF or Image
+                if (p.bukti.startsWith('data:application/pdf') || p.bukti.endsWith('.pdf')) {
+                    modalBody.innerHTML = `
+                        <iframe src="${p.bukti}" style="width:100%; height:500px;" frameborder="0"></iframe>
+                    `;
+                } else {
+                    modalBody.innerHTML = `
+                        <div class="d-flex justify-content-center align-items-center">
+                            <img src="${p.bukti}" class="img-fluid rounded shadow-sm border" alt="Bukti Prestasi" style="max-height: 80vh; max-width: 100%;">
+                        </div>
+                    `;
+                }
             } else {
                 modalBody.innerHTML = `
                     <div class="text-center py-5">
@@ -325,7 +367,7 @@
             }
             const modal = new bootstrap.Modal(document.getElementById('detailModal'));
             modal.show();
-        }
+        };
     </script>
 </body>
 

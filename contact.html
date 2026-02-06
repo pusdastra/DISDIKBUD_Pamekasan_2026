@@ -178,32 +178,50 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/js/data.js"></script>
+    <script type="module" src="assets/js/data.js"></script>
     <script src="assets/js/particles.js"></script>
-    <script>
-        document.getElementById('contactForm').addEventListener('submit', function (e) {
+    <script type="module">
+        import { DataStore } from './assets/js/data.js';
+
+        document.getElementById('contactForm').addEventListener('submit', async function (e) {
             e.preventDefault();
 
             // Get Values
             const name = this.querySelector('input[placeholder="Nama Anda"]').value;
             const contact = this.querySelector('input[placeholder="Kontak"]').value;
             const message = this.querySelector('textarea').value;
-            const date = new Date().toLocaleString('id-ID');
+            const date = new Date().toLocaleString('id-ID'); // Client timestamp
 
-            // Save to Secure Inbox
-            const msgData = {
-                name: name,
-                contact: contact,
-                message: message,
-                date: date,
-                isRead: false
-            };
-            window.DataStore.saveMessage(msgData);
+            const btn = this.querySelector('button[type="submit"]');
+            const originalText = btn.innerText;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Mengirim...';
+            btn.disabled = true;
 
-            // Simulate sending to specific admin
-            const adminEmail = 'disdikbudpamekasan08@gmail.com';
-            alert(`Pesan TERKIRIM!\n\nPesan Anda telah diamankan dan dikirim langsung ke Kotak Masuk Admin Utama:\n${adminEmail}\n\nTerima kasih telah menghubungi kami.`);
-            this.reset();
+            try {
+                // Save to Secure Inbox (Firestore)
+                const msgData = {
+                    name: name,
+                    contact: contact,
+                    message: message,
+                    date: date,
+                    isRead: false,
+                    createdAt: new Date().toISOString() // Sortable server time
+                };
+
+                await DataStore.saveMessage(msgData);
+
+                // Simulate sending to specific admin
+                const adminEmail = 'disdikbudpamekasan08@gmail.com';
+                alert(`Pesan TERKIRIM!\n\nPesan Anda telah diamankan ke Database Cloud dan dikirim ke Admin: ${adminEmail}\n\nTerima kasih.`);
+                this.reset();
+
+            } catch (error) {
+                console.error("Error sending message:", error);
+                alert("Gagal mengirim pesan. Silahkan coba lagi.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = originalText;
+            }
         });
     </script>
 </body>

@@ -68,7 +68,7 @@
             <li class="nav-item"><a href="dashboard.html" class="nav-link text-white"><i
                         class="bi bi-house-door me-2"></i> Dashboard</a></li>
             <li class="nav-item mt-3 text-white-50 small text-uppercase fw-bold ls-1">Master Data</li>
-            <li><a href="siswa.html" class="nav-link text-white"><i class="bi bi-people me-2"></i> Data Siswa</a></li>
+            <!-- <li><a href="siswa.html" class="nav-link text-white"><i class="bi bi-people me-2"></i> Data Siswa</a></li> -->
             <li><a href="prestasi.html" class="nav-link text-white"><i class="bi bi-trophy me-2"></i> Data Prestasi</a>
             </li>
             <li><a href="sekolah.html" class="nav-link active"><i class="bi bi-building me-2"></i> Data Sekolah</a></li>
@@ -82,7 +82,7 @@
     <main class="main-content p-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="h3 fw-bold">Manajemen Sekolah</h2>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSekolahModal">
+            <button id="btnAddSekolah" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSekolahModal">
                 <i class="bi bi-plus-lg me-1"></i> Tambah Sekolah
             </button>
         </div>
@@ -169,6 +169,10 @@
                                 <option>Pasean</option>
                                 <option>Waru</option>
                                 <option>Batu Marmar</option>
+                                <option>Kadirur</option>
+                                <option>Pegantenan</option>
+                                <option>Palengaan</option>
+                                <option>Batuputih</option>
                             </select>
                         </div>
                         <div class="modal-footer px-0 pb-0">
@@ -184,91 +188,96 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../assets/js/data.js"></script>
     <script src="../assets/js/particles.js"></script>
-    <script>
+    <script type="module">
+        import { DataStore, Auth } from '../assets/js/data.js';
+
+        window.DataStore = DataStore;
+        window.Auth = Auth;
+
         // Check Auth
-        if (!window.Auth.check()) window.location.href = '../login.html';
+        const session = Auth.check();
+        if (!session) window.location.href = '../login.html';
 
-        // Global state
         let isEditing = false;
-        let editIndex = -1;
+        let editId = null;
 
-        // Expose to window
-        window.deleteItem = deleteItem;
-        window.editItem = editItem;
-
-        function renderTable() {
-            const data = window.DataStore.getSekolah();
+        // Render Table
+        async function renderTable() {
             const tbody = document.getElementById('sekolahTableBody');
             const emptyState = document.getElementById('emptyState');
 
-            tbody.innerHTML = '';
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center">Memuat data...</td></tr>';
 
-            if (data.length === 0) {
-                emptyState.classList.remove('d-none');
-            } else {
-                emptyState.classList.add('d-none');
+            try {
+                const data = await DataStore.getSekolah();
+
+                tbody.innerHTML = '';
+                if (data.length === 0) {
+                    if (emptyState) emptyState.classList.remove('d-none');
+                    return;
+                }
+
+                if (emptyState) emptyState.classList.add('d-none');
+
+                // SINGLE DATA POLICY:
+                // If user is NOT admin, and their school data already exists, HIDE the "Add" button.
+                if (session.role !== 'admin') {
+                    const existing = data.find(d => d.nama === session.school);
+                    const btnAdd = document.getElementById('btnAddSekolah');
+                    if (existing && btnAdd) {
+                        btnAdd.style.display = 'none';
+                    } else if (btnAdd) {
+                        btnAdd.style.display = 'block';
+                    }
+                }
+
                 data.forEach((item, index) => {
                     let badgeColor = item.jenjang === 'SD' ? 'primary' : (item.jenjang === 'SMP' ? 'success' : 'warning');
 
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${item.npsn}</td>
-                        <td class="fw-bold">${item.nama}</td>
-                        <td><span class="badge bg-${badgeColor}">${item.jenjang}</span></td>
-                        <td>${item.status}</td>
-                        <td>${item.kecamatan}</td>
-                        <td>
-                             <button class="btn btn-sm btn-warning me-1" onclick="window.editItem(${index})"><i class="bi bi-pencil"></i></button>
-                             <button class="btn btn-sm btn-danger" onclick="window.deleteItem(${index})"><i class="bi bi-trash"></i></button>
-                        </td>
+                    // RBAC: Action Buttons
+                    let actionButtons = '<span class="text-muted small"><i class="bi bi-lock-fill"></i> Read Only</span>';
+
+                    // Allow if Admin OR if the item belongs to the logged-in user's school
+                    // Note: We compare item.nama with session.school (assuming exact match).
+                    // Basic normalization to be safe
+                    const isOwner = (item.nama && session.school && item.nama.trim().toLowerCase() === session.school.trim().toLowerCase());
+
+                    if (session.role === 'admin' || isOwner) {
+                        actionButtons = `
+                            <button class="btn btn-sm btn-warning me-1" onclick="editSekolah('${item.id}')"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteSekolah('${item.id}')"><i class="bi bi-trash"></i></button>
+                        `;
+                    }
+
+                    const row = `
+                        <tr>
+                            <td>${item.npsn}</td>
+                            <td class="fw-bold">${item.nama}</td>
+                            <td><span class="badge bg-${badgeColor}">${item.jenjang}</span></td>
+                            <td>${item.status}</td>
+                            <td>${item.kecamatan}</td>
+                            <td>
+                                ${actionButtons}
+                            </td>
+                        </tr>
                     `;
-                    tbody.appendChild(tr);
+                    tbody.innerHTML += row;
                 });
+            } catch (error) {
+                console.error("Render Error:", error);
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Gagal memuat data.</td></tr>';
             }
         }
 
-        function deleteItem(index) {
-            if (confirm('Hapus data sekolah ini?')) {
-                try {
-                    window.DataStore.deleteSekolah(index);
-                    alert('Data berhasil dihapus!');
-                    renderTable();
-                } catch (e) {
-                    alert('Error: ' + e.message);
-                }
-            }
-        }
-
-        function editItem(index) {
-            const data = window.DataStore.getSekolah()[index];
-            if (!data) return;
-
-            document.getElementById('inputNpsn').value = data.npsn;
-            document.getElementById('inputNamaSekolah').value = data.nama;
-            document.getElementById('inputJenjang').value = data.jenjang;
-            document.getElementById('inputStatus').value = data.status;
-            document.getElementById('inputKecamatan').value = data.kecamatan;
-
-            isEditing = true;
-            editIndex = index;
-
-            document.querySelector('#addSekolahModal .modal-title').innerText = 'Edit Data Sekolah';
-            document.querySelector('#addSekolahModal button[type="submit"]').innerText = 'Update Data';
-
-            const modal = new bootstrap.Modal(document.getElementById('addSekolahModal'));
-            modal.show();
-        }
-
-        document.getElementById('addSekolahModal').addEventListener('hidden.bs.modal', () => {
-            document.getElementById('addSekolahForm').reset();
-            isEditing = false;
-            editIndex = -1;
-            document.querySelector('#addSekolahModal .modal-title').innerText = 'Data Sekolah Baru';
-            document.querySelector('#addSekolahModal button[type="submit"]').innerText = 'Simpan';
-        });
-
-        document.getElementById('addSekolahForm').addEventListener('submit', function (e) {
+        // Handle Submit
+        document.getElementById('addSekolahForm').addEventListener('submit', async function (e) {
             e.preventDefault();
+
+            const btn = this.querySelector('button[type="submit"]');
+            const originalText = btn.innerText;
+            btn.disabled = true;
+            btn.innerText = 'Menyimpan...';
+
             const newData = {
                 npsn: document.getElementById('inputNpsn').value,
                 nama: document.getElementById('inputNamaSekolah').value,
@@ -277,20 +286,92 @@
                 kecamatan: document.getElementById('inputKecamatan').value
             };
 
-            if (isEditing) {
-                window.DataStore.updateSekolah(editIndex, newData);
-                alert('Data berhasil diperbarui!');
-            } else {
-                window.DataStore.addSekolah(newData);
-                alert('Data berhasil disimpan!');
+            // SECURITY: If not admin, FORCE the school name to be the session school name
+            if (session.role !== 'admin') {
+                newData.nama = session.school;
             }
 
-            const modalEl = document.getElementById('addSekolahModal');
-            let modal = bootstrap.Modal.getInstance(modalEl);
-            if (!modal) modal = new bootstrap.Modal(modalEl);
-            modal.hide();
+            try {
+                if (isEditing) {
+                    await DataStore.updateSekolah(editId, newData);
+                    alert('Data berhasil diperbarui!');
+                } else {
+                    await DataStore.addSekolah(newData);
+                    alert('Data berhasil ditambahkan!');
+                }
 
-            renderTable();
+                const modalEl = document.getElementById('addSekolahModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                modal.hide();
+
+                renderTable();
+            } catch (e) {
+                alert('Gagal menyimpan: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = originalText;
+            }
+        });
+
+        // Global Actions
+        window.deleteSekolah = async function (id) {
+            if (confirm('Yakin ingin menghapus data sekolah ini?')) {
+                try {
+                    await DataStore.deleteSekolah(id);
+                    renderTable();
+                } catch (e) {
+                    alert('Gagal menghapus: ' + e.message);
+                }
+            }
+        };
+
+        window.editSekolah = async function (id) {
+            try {
+                const list = await DataStore.getSekolah();
+                const data = list.find(d => d.id === id);
+
+                if (data) {
+                    document.getElementById('inputNpsn').value = data.npsn;
+                    document.getElementById('inputNamaSekolah').value = data.nama;
+                    document.getElementById('inputJenjang').value = data.jenjang;
+                    document.getElementById('inputStatus').value = data.status;
+                    document.getElementById('inputKecamatan').value = data.kecamatan;
+
+                    isEditing = true;
+                    editId = id;
+                    document.querySelector('#addSekolahModal .modal-title').innerText = 'Edit Data Sekolah';
+                    document.querySelector('#addSekolahModal button[type="submit"]').innerText = 'Update Data';
+
+                    new bootstrap.Modal(document.getElementById('addSekolahModal')).show();
+                }
+            } catch (e) {
+                alert("Gagal memuat data edit.");
+            }
+        };
+
+        // Modal Open Handler (Auto-Fill & Lock Name)
+        document.getElementById('addSekolahModal').addEventListener('show.bs.modal', function () {
+            const nameInput = document.getElementById('inputNamaSekolah');
+            if (session.role !== 'admin') {
+                nameInput.value = session.school;
+                nameInput.readOnly = true;
+                nameInput.classList.add('bg-light'); // Visual cue
+            } else {
+                // Determine if we are adding new or editing (logic mostly handled by edit function, but reset for Add)
+                if (!isEditing) {
+                    nameInput.readOnly = false;
+                    nameInput.classList.remove('bg-light');
+                }
+            }
+        });
+
+        // Reset
+        document.getElementById('addSekolahModal').addEventListener('hidden.bs.modal', () => {
+            document.getElementById('addSekolahForm').reset();
+            isEditing = false;
+            editId = null;
+            document.querySelector('#addSekolahModal .modal-title').innerText = 'Data Sekolah Baru';
+            document.querySelector('#addSekolahModal button[type="submit"]').innerText = 'Simpan';
         });
 
         renderTable();

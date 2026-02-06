@@ -157,123 +157,182 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../assets/js/data.js"></script>
     <script src="../assets/js/particles.js"></script>
-    <script>
+    <script type="module">
+        import { DataStore, Auth } from '../assets/js/data.js';
+
+        // Expose to window for inline HTML onclicks 
+        window.DataStore = DataStore;
+        window.Auth = Auth;
+
         // Check Auth
-        if (!window.Auth.check()) window.location.href = '../login.html';
+        const session = Auth.check();
+        if (!session) window.location.href = '../login.html';
 
-        // Load & Render Data
-        // Global state for editing
+        // Global State
         let isEditing = false;
-        let editIndex = -1;
-
-        // Initialize Global Functions
-        window.renderTable = renderTable;
-        window.deleteItem = deleteItem;
-        window.editItem = editItem;
+        let editId = null;
 
         // Render Table
-        function renderTable() {
-            const data = window.DataStore.getSiswa();
+        async function renderTable() {
             const tbody = document.getElementById('siswaTableBody');
             const emptyState = document.getElementById('emptyState');
 
-            tbody.innerHTML = '';
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center">Memuat data...</td></tr>';
 
-            if (data.length === 0) {
-                emptyState.classList.remove('d-none');
-            } else {
-                emptyState.classList.add('d-none');
-                data.forEach((item, index) => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${item.nisn}</td>
-                        <td class="fw-bold">${item.nama}</td>
-                        <td>${item.sekolah}</td>
-                        <td>${item.kelas}</td>
-                        <td>
-                            <button class="btn btn-sm btn-warning me-1" onclick="window.editItem(${index})"><i class="bi bi-pencil"></i></button>
-                            <button class="btn btn-sm btn-danger" onclick="window.deleteItem(${index})"><i class="bi bi-trash"></i></button>
-                        </td>
+            try {
+                let siswaList = await DataStore.getSiswa();
+
+                // --- ROLE BASED ACCESS CONTROL ---
+                // If not admin, filter by school
+                if (session.role !== 'admin') {
+                    // Assuming session.school contains the school name exactly as in the data
+                    siswaList = siswaList.filter(s => s.sekolah === session.school);
+                }
+
+                tbody.innerHTML = '';
+                if (siswaList.length === 0) {
+                    if (emptyState) emptyState.classList.remove('d-none');
+                    return;
+                }
+
+                if (emptyState) emptyState.classList.add('d-none');
+
+                siswaList.forEach((s, index) => {
+                    const row = `
+                        <tr>
+                            <td>${s.nisn}</td>
+                            <td class="fw-bold">${s.nama}</td>
+                            <td>${s.sekolah}</td>
+                            <td>${s.kelas}</td>
+                            <td>
+                                <button onclick="editSiswa('${s.id}')" class="btn btn-sm btn-warning text-white me-1"><i class="bi bi-pencil-square"></i></button>
+                                <button onclick="deleteSiswa('${s.id}')" class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></button>
+                            </td>
+                        </tr>
                     `;
-                    tbody.appendChild(tr);
+                    tbody.innerHTML += row;
                 });
+            } catch (error) {
+                console.error("Render Error:", error);
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Gagal memuat data.</td></tr>';
             }
         }
 
-        // Delete Action
-        function deleteItem(index) {
+        // Add/Update Submit
+        document.getElementById('addSiswaForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const btn = this.querySelector('button[type="submit"]');
+            const originalText = btn.innerText;
+            btn.disabled = true;
+            btn.innerText = 'Menyimpan...';
+
+            const nisn = document.getElementById('inputNisn').value;
+            const nama = document.getElementById('inputNama').value;
+            let sekolah = document.getElementById('inputSekolah').value;
+            const jenjang = document.getElementById('inputJenjang').value;
+            const kelas = document.getElementById('inputKelas').value;
+
+            // Enforce School Name for Non-Admins
+            if (session.role !== 'admin') {
+                sekolah = session.school;
+            }
+
+            try {
+                const data = { nisn, nama, sekolah, jenjang, kelas };
+
+                if (isEditing) {
+                    await DataStore.updateSiswa(editId, data);
+                    alert('Data berhasil diperbarui!');
+                } else {
+                    await DataStore.addSiswa(data);
+                    alert('Data berhasil ditambahkan!');
+                }
+
+                // Reset & Close
+                const modalEl = document.getElementById('addSiswaModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                modal.hide();
+
+                renderTable();
+            } catch (error) {
+                console.error("Save Error:", error);
+                alert('Gagal menyimpan data: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = originalText;
+                // Reset State handled by hidden.bs.modal listener
+            }
+        });
+
+        // Global Actions
+        window.deleteSiswa = async function (id) {
             if (confirm('Yakin ingin menghapus data ini?')) {
                 try {
-                    window.DataStore.deleteSiswa(index);
-                    alert('Data berhasil dihapus!'); // Feedback
+                    await DataStore.deleteSiswa(id);
                     renderTable();
                 } catch (e) {
-                    alert('Gagal menghapus data: ' + e.message);
+                    alert('Gagal menghapus: ' + e.message);
                 }
             }
-        }
+        };
 
-        // Edit Action
-        function editItem(index) {
-            const data = window.DataStore.getSiswa()[index];
-            if (!data) return;
+        // Setup Modal for Non-Admin (Auto-fill School)
+        const modalEl = document.getElementById('addSiswaModal');
+        modalEl.addEventListener('show.bs.modal', function () {
+            if (session.role !== 'admin') {
+                const schoolInput = document.getElementById('inputSekolah');
+                if (schoolInput) {
+                    schoolInput.value = session.school;
+                    schoolInput.readOnly = true; // Lock the field
+                }
+            }
+        });
 
-            document.getElementById('inputNisn').value = data.nisn;
-            document.getElementById('inputNama').value = data.nama;
-            document.getElementById('inputSekolah').value = data.sekolah;
-            document.getElementById('inputJenjang').value = data.jenjang;
-            document.getElementById('inputKelas').value = data.kelas;
+        // Global function to edit
+        window.editSiswa = async function (id) {
+            try {
+                // Fetch fresh data or use cache if we had one (here fetching fresh is safer)
+                const siswaList = await DataStore.getSiswa();
+                const data = siswaList.find(s => s.id === id); // We don't need to filter here strictly if backend rules existed, but client side we already filtered view.
 
-            // Set state
-            isEditing = true;
-            editIndex = index;
+                if (data) {
+                    // Security Check: If not admin, ensure data belongs to them
+                    if (session.role !== 'admin' && data.sekolah !== session.school) {
+                        alert("Anda tidak memiliki akses untuk mengedit data ini.");
+                        return;
+                    }
 
-            document.querySelector('#addSiswaModal .modal-title').innerText = 'Edit Data Siswa';
-            document.querySelector('#addSiswaModal button[type="submit"]').innerText = 'Update Data';
+                    isEditing = true;
+                    editId = id;
 
-            const modal = new bootstrap.Modal(document.getElementById('addSiswaModal'));
-            modal.show();
-        }
+                    document.getElementById('inputNisn').value = data.nisn;
+                    document.getElementById('inputNama').value = data.nama;
+                    document.getElementById('inputSekolah').value = data.sekolah;
+                    document.getElementById('inputJenjang').value = data.jenjang;
+                    document.getElementById('inputKelas').value = data.kelas;
 
-        // Reset Form when Modal Closes
-        document.getElementById('addSiswaModal').addEventListener('hidden.bs.modal', () => {
+                    document.querySelector('#addSiswaModal .modal-title').innerText = 'Edit Data Siswa';
+                    document.querySelector('#addSiswaModal button[type="submit"]').innerText = 'Update Data';
+
+                    new bootstrap.Modal(document.getElementById('addSiswaModal')).show();
+                }
+            } catch (e) {
+                console.error("Edit Error:", e);
+                alert("Gagal memuat data untuk edit.");
+            }
+        };
+
+        // Reset Modal on Close
+        document.getElementById('addSiswaModal').addEventListener('hidden.bs.modal', function () {
             document.getElementById('addSiswaForm').reset();
             isEditing = false;
-            editIndex = -1;
+            editId = null;
             document.querySelector('#addSiswaModal .modal-title').innerText = 'Tambah Data Siswa';
             document.querySelector('#addSiswaModal button[type="submit"]').innerText = 'Simpan Data';
         });
 
-        // Submit Form (Add or Update)
-        document.getElementById('addSiswaForm').addEventListener('submit', function (e) {
-            e.preventDefault();
-            const newData = {
-                nisn: document.getElementById('inputNisn').value,
-                nama: document.getElementById('inputNama').value,
-                sekolah: document.getElementById('inputSekolah').value,
-                jenjang: document.getElementById('inputJenjang').value,
-                kelas: document.getElementById('inputKelas').value
-            };
-
-            if (isEditing) {
-                window.DataStore.updateSiswa(editIndex, newData);
-                alert('Data berhasil diperbarui!');
-            } else {
-                window.DataStore.addSiswa(newData);
-                alert('Data berhasil disimpan!');
-            }
-
-            // Close Modal & Reset
-            const modalEl = document.getElementById('addSiswaModal');
-            // Check if modal instance already exists (it might if opened via JS)
-            let modal = bootstrap.Modal.getInstance(modalEl);
-            if (!modal) modal = new bootstrap.Modal(modalEl); // Fallback
-            modal.hide();
-
-            renderTable();
-        });
-
-        // Initialize
+        // Initial Load
         renderTable();
     </script>
 </body>

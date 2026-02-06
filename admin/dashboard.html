@@ -72,7 +72,7 @@
                 </a>
             </li>
             <li class="nav-item mt-3 text-white-50 small text-uppercase fw-bold ls-1">Master Data</li>
-            <li><a href="siswa.html" class="nav-link text-white"><i class="bi bi-people me-2"></i> Data Siswa</a></li>
+            <!-- Data Siswa Removed as per request -->
             <li><a href="prestasi.html" class="nav-link text-white"><i class="bi bi-trophy me-2"></i> Data Prestasi</a>
             </li>
             <li><a href="sekolah.html" class="nav-link text-white"><i class="bi bi-building me-2"></i> Data Sekolah</a>
@@ -150,40 +150,63 @@
         </div>
 
         <!-- Metric Cards -->
+        <!-- Metric Cards (Reordered: Prestasi First) -->
         <div class="row g-4 mb-4">
-            <div class="col-md-3">
-                <div class="card h-100 border-0 shadow-sm text-dark">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h5 class="card-title mb-0">Total Siswa</h5>
-                            <i class="bi bi-people fs-4 text-secondary"></i>
+            <!-- Card 1: Total Prestasi -->
+            <div class="col-md-6">
+                <div class="card h-100 border-0 shadow-sm text-white bg-primary bg-gradient">
+                    <div class="card-body p-4 d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title mb-1 text-white-50">Total Prestasi</h5>
+                            <h2 class="fw-bold mb-0 display-4" id="statPrestasi">0</h2>
+                            <small class="text-white-50">Penghargaan Tercatat</small>
                         </div>
-                        <h2 class="fw-bold mb-0 text-dark" id="statSiswa">0</h2>
-                        <small class="text-muted">Data Terinput</small>
+                        <i class="bi bi-trophy-fill fs-1 text-white-50"></i>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="card h-100 border-0 shadow-sm text-dark">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h5 class="card-title mb-0">Prestasi</h5>
-                            <i class="bi bi-trophy fs-4 text-secondary"></i>
+
+            <!-- Card 2: Sekolah Terdaftar -->
+            <div class="col-md-6">
+                <div class="card h-100 border-0 shadow-sm text-dark bg-white">
+                    <div class="card-body p-4 d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title mb-1 text-muted">Sekolah</h5>
+                            <h2 class="fw-bold mb-0 display-4" id="statSekolah">0</h2>
+                            <small class="text-muted">Partisipasi Sekolah</small>
                         </div>
-                        <h2 class="fw-bold mb-0 text-dark" id="statPrestasi">0</h2>
-                        <small class="text-muted">Total Penghargaan</small>
+                        <i class="bi bi-building fs-1 text-secondary"></i>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="card h-100 border-0 shadow-sm text-dark">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h5 class="card-title mb-0">Sekolah</h5>
-                            <i class="bi bi-building fs-4 text-secondary"></i>
+        </div>
+
+        <!-- Top Schools Section -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white py-3 border-bottom">
+                        <h5 class="card-title mb-0 fw-bold text-primary"><i
+                                class="bi bi-star-fill text-warning me-2"></i> Sekolah Paling Unggul</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-striped align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="text-center" style="width: 80px;">Peringkat</th>
+                                        <th>Nama Sekolah</th>
+                                        <th class="text-center" style="width: 150px;">Total Prestasi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="topSchoolsBody">
+                                    <!-- Dynamic Content -->
+                                    <tr>
+                                        <td colspan="3" class="text-center py-3">Memuat data...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
-                        <h2 class="fw-bold mb-0 text-dark" id="statSekolah">0</h2>
-                        <small class="text-muted">Terdaftar</small>
                     </div>
                 </div>
             </div>
@@ -200,117 +223,170 @@
             </div>
             <div class="toast-body">
                 Ada <strong id="toastCount">0</strong> sekolah menunggu verifikasi akun. Silahkan cek menu Pengaturan.
-            </div>
-        </div>
-    </div>
+                <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+                <script src="../assets/js/particles.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="../assets/js/data.js"></script>
-    <script src="../assets/js/particles.js"></script>
-    <script>
-        // Check Auth
-        const session = window.Auth.check();
-        if (!session) window.location.href = '../login.html';
+                <script type="module">
+                    import { Auth, DataStore } from '../assets/js/data.js';
 
-        document.getElementById('adminNameDisplay').innerText = session.name || session.username;
+                    // Expose to window for inline onclicks (Logout, Actions)
+                    window.Auth = Auth;
+                    window.DataStore = DataStore;
 
-        // Load Stats from Data Engine
-        const stats = window.DataStore.getStats();
+                    (async function () {
+                        // Check Auth
+                        const session = Auth.check();
+                        if (!session) {
+                            window.location.href = '../login.html';
+                            return;
+                        }
 
-        document.getElementById('statSiswa').innerText = stats.totalSiswa;
-        document.getElementById('statPrestasi').innerText = stats.totalPrestasi;
-        document.getElementById('statSekolah').innerText = stats.totalSekolah;
+                        document.getElementById('adminNameDisplay').innerText = session.name || session.username;
 
-        // Check Pending Users (Notification Logic)
-        // Check Pending Users (Notification Logic) - STRICT PRIVACY FOR ADMIN ONLY
-        const pendingUsers = window.Auth.getPendingUsers();
-        // Only show if logged in as the specific Super Admin
-        if (session.email === 'disdikbudpamekasan08@gmail.com' && pendingUsers.length > 0) {
-            // Update Sidebar Badge
-            const badge = document.getElementById('sidebarBadge');
-            if (badge) {
-                badge.innerText = pendingUsers.length;
-                badge.classList.remove('d-none');
-            }
+                        // Load Stats from Data Engine
+                        try {
+                            const [stats, prestasiList] = await Promise.all([
+                                DataStore.getStats(),
+                                DataStore.getPrestasi() // We need full list for calculating Top Schools locally
+                            ]);
 
-            // Show Toast
-            const toastEl = document.getElementById('liveToast');
-            if (toastEl) {
-                document.getElementById('toastCount').innerText = pendingUsers.length;
-                const toast = new bootstrap.Toast(toastEl);
-                toast.show();
-            }
-        }
+                            // 1. Update Cards (Reordered priority logic)
+                            // Prestasi First!
+                            document.getElementById('statPrestasi').innerText = stats.totalPrestasi;
+                            document.getElementById('statSekolah').innerText = stats.totalSekolah;
 
-        // --- SECURE INBOX LOGIC ---
-        // Only specific Admin can see messages
-        if (session.email === 'disdikbudpamekasan08@gmail.com') {
-            const inboxMenu = document.getElementById('inboxMenu');
-            const inboxSection = document.getElementById('inboxSection');
-            const msgBadge = document.getElementById('msgBadge');
-            const tbody = document.getElementById('inboxTableBody');
-            const empty = document.getElementById('inboxEmpty');
+                            // 2. Compute Top Schools (Sekolah Unggul)
+                            const schoolCounts = {};
+                            prestasiList.forEach(p => {
+                                const sName = p.sekolah || p.school || 'Unknown';
+                                schoolCounts[sName] = (schoolCounts[sName] || 0) + 1;
+                            });
 
-            // Show UI
-            if (inboxMenu) inboxMenu.classList.remove('d-none');
-            if (inboxSection) inboxSection.classList.remove('d-none');
+                            const sortedSchools = Object.entries(schoolCounts)
+                                .sort((a, b) => b[1] - a[1])
+                                .slice(0, 5); // Top 5
 
-            function renderInbox() {
-                const messages = window.DataStore.getMessages();
-                if (msgBadge) msgBadge.innerText = messages.filter(m => !m.isRead).length; // Badge counts unread only
+                            // Render Top Schools
+                            const topSchoolContainer = document.getElementById('topSchoolsBody');
+                            if (topSchoolContainer) {
+                                topSchoolContainer.innerHTML = '';
+                                if (sortedSchools.length === 0) {
+                                    topSchoolContainer.innerHTML = '<tr><td colspan="3" class="text-center text-muted">Belum ada data prestasi.</td></tr>';
+                                } else {
+                                    sortedSchools.forEach((item, index) => {
+                                        const rank = index + 1;
+                                        const medal = rank === 1 ? '🥇' : (rank === 2 ? '🥈' : (rank === 3 ? '🥉' : `#${rank}`));
+                                        const row = `
+                                            <tr>
+                                                <td class="text-center fs-5">${medal}</td>
+                                                <td class="fw-bold">${item[0]}</td>
+                                                <td class="text-center"><span class="badge bg-primary rounded-pill">${item[1]} Prestasi</span></td>
+                                            </tr>
+                                        `;
+                                        topSchoolContainer.innerHTML += row;
+                                    });
+                                }
+                            }
 
-                if (messages.length > 0) {
-                    if (empty) empty.classList.add('d-none');
-                    tbody.innerHTML = '';
+                        } catch (e) {
+                            console.error("Stats Error", e);
+                        }
 
-                    // Show newest first, but keep original index for deletion
-                    // We map to add original index, then reverse
-                    messages.map((msg, idx) => ({ ...msg, originalIndex: idx })).reverse().forEach(msg => {
-                        const rowClass = msg.isRead ? 'bg-light text-muted' : 'fw-bold';
-                        const checkIcon = msg.isRead ? 'bi-check-circle-fill text-success' : 'bi-check-circle';
-                        const checkTitle = msg.isRead ? 'Tandai Belum Dibaca' : 'Tandai Sudah Dibaca';
+                        // Check Pending Users (Notification Logic)
+                        // Check Pending Users (Notification Logic) - STRICT PRIVACY FOR ADMIN ONLY
+                        const pendingUsers = await Auth.getPendingUsers();
 
-                        const row = `
-                            <tr class="${rowClass}">
-                                <td class="ps-4 small">${msg.date}</td>
-                                <td>${msg.name}</td>
-                                <td>${msg.contact}</td>
-                                <td>${msg.message}</td>
-                                <td class="text-center">
-                                    <button onclick="toggleMsg(${msg.originalIndex})" class="btn btn-sm btn-outline-success me-1" title="${checkTitle}">
-                                        <i class="bi ${checkIcon}"></i>
-                                    </button>
-                                    <button onclick="deleteMsg(${msg.originalIndex})" class="btn btn-sm btn-outline-danger" title="Hapus Pesan">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
-                        tbody.innerHTML += row;
-                    });
-                } else {
-                    if (empty) empty.classList.remove('d-none');
-                    tbody.innerHTML = '';
-                }
-            }
+                        // Only show if logged in as the specific Super Admin
+                        if (session.email === 'disdikbudpamekasan08@gmail.com' && pendingUsers.length > 0) {
+                            // Update Sidebar Badge
+                            const badge = document.getElementById('sidebarBadge');
+                            if (badge) {
+                                badge.innerText = pendingUsers.length;
+                                badge.classList.remove('d-none');
+                            }
 
-            // Expose actions to global scope
-            window.toggleMsg = function (index) {
-                window.DataStore.toggleMessageStatus(index);
-                renderInbox();
-            };
+                            // Show Toast
+                            const toastEl = document.getElementById('liveToast');
+                            if (toastEl) {
+                                document.getElementById('toastCount').innerText = pendingUsers.length;
+                                const toast = new bootstrap.Toast(toastEl);
+                                toast.show();
+                            }
+                        }
 
-            window.deleteMsg = function (index) {
-                if (confirm('Apakah Anda yakin ingin menghapus pesan ini?')) {
-                    window.DataStore.deleteMessage(index);
-                    renderInbox();
-                }
-            };
+                        // --- SECURE INBOX LOGIC ---
+                        // Only specific Admin can see messages
+                        if (session.email === 'disdikbudpamekasan08@gmail.com') {
+                            const inboxMenu = document.getElementById('inboxMenu');
+                            const inboxSection = document.getElementById('inboxSection');
 
-            // Initial Render
-            renderInbox();
-        }
-    </script>
+                            // Show UI
+                            if (inboxMenu) inboxMenu.classList.remove('d-none');
+                            if (inboxSection) inboxSection.classList.remove('d-none');
+
+                            window.renderInbox = async function () {
+                                const msgBadge = document.getElementById('msgBadge');
+                                const tbody = document.getElementById('inboxTableBody');
+                                const empty = document.getElementById('inboxEmpty');
+
+                                const messages = await DataStore.getMessages();
+
+                                if (msgBadge) msgBadge.innerText = messages.filter(m => !m.isRead).length;
+
+                                if (messages.length > 0) {
+                                    if (empty) empty.classList.add('d-none');
+                                    tbody.innerHTML = '';
+
+                                    // Show newest first (client filter, ideally server order)
+                                    // Note: For firestore without created index, client sort is easiest for small data
+                                    // Adding ID to handle actions
+                                    messages.reverse().forEach(msg => {
+                                        const rowClass = msg.isRead ? 'bg-light text-muted' : 'fw-bold';
+                                        const checkIcon = msg.isRead ? 'bi-check-circle-fill text-success' : 'bi-check-circle';
+                                        const checkTitle = msg.isRead ? 'Tandai Belum Dibaca' : 'Tandai Sudah Dibaca';
+
+                                        const row = `
+                                <tr class="${rowClass}">
+                                    <td class="ps-4 small">${msg.date}</td>
+                                    <td>${msg.name}</td>
+                                    <td>${msg.contact}</td>
+                                    <td>${msg.message}</td>
+                                    <td class="text-center">
+                                        <button onclick="toggleMsg('${msg.id}', ${msg.isRead})" class="btn btn-sm btn-outline-success me-1" title="${checkTitle}">
+                                            <i class="bi ${checkIcon}"></i>
+                                        </button>
+                                        <button onclick="deleteMsg('${msg.id}')" class="btn btn-sm btn-outline-danger" title="Hapus Pesan">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                                        tbody.innerHTML += row;
+                                    });
+                                } else {
+                                    if (empty) empty.classList.remove('d-none');
+                                    tbody.innerHTML = '';
+                                }
+                            }
+
+                            // Global Action Handlers
+                            window.toggleMsg = async function (id, currentStatus) {
+                                await DataStore.toggleMessageStatus(id, currentStatus);
+                                renderInbox();
+                            };
+
+                            window.deleteMsg = async function (id) {
+                                if (confirm('Apakah Anda yakin ingin menghapus pesan ini?')) {
+                                    await DataStore.deleteMessage(id);
+                                    renderInbox();
+                                }
+                            };
+
+                            // Initial Render
+                            renderInbox();
+                        }
+                    })();
+                </script>
 </body>
 
 </html>
