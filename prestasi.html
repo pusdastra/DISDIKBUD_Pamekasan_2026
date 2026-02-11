@@ -94,13 +94,8 @@
                                     placeholder="Nama siswa/sekolah...">
                             </div>
                             <div class="mb-3">
-                                <label class="form-label small fw-bold">Tahun</label>
-                                <select id="filterYear" class="form-select">
-                                    <option value="">Semua Tahun</option>
-                                    <option value="2026">2026</option>
-                                    <option value="2025">2025</option>
-                                    <option value="2024">2024</option>
-                                </select>
+                                <label class="form-label small fw-bold">Tanggal</label>
+                                <input type="date" id="filterDate" class="form-control">
                             </div>
                             <div class="mb-3">
                                 <label class="form-label small fw-bold">Jenjang</label>
@@ -239,8 +234,8 @@
             const searchObj = document.getElementById('filterSearch');
             const search = searchObj ? searchObj.value.toLowerCase() : '';
 
-            const yearObj = document.getElementById('filterYear');
-            const yearFilter = yearObj ? yearObj.value : '';
+            const dateObj = document.getElementById('filterDate');
+            const dateFilter = dateObj ? dateObj.value : '';
 
             const tingkatObj = document.getElementById('filterTingkat');
             const tingkatFilter = tingkatObj ? tingkatObj.value : '';
@@ -250,7 +245,7 @@
             const jenjangSMP = document.getElementById('jenjangSMP').checked;
 
             // Apply Filters
-            if (search || yearFilter || tingkatFilter || jenjangPAUD || jenjangSD || jenjangSMP) {
+            if (search || dateFilter || tingkatFilter || jenjangPAUD || jenjangSD || jenjangSMP) {
                 list = list.filter(p => {
                     // Normalize fields
                     const pName = (p.nama || p.siswa || '').toLowerCase();
@@ -265,9 +260,8 @@
                         pSchool.includes(search) ||
                         pLomba.includes(search);
 
-                    // 2. Year
-                    const pYear = pDate.substring(0, 4);
-                    const matchYear = !yearFilter || pYear === yearFilter;
+                    // 2. Date
+                    const matchDate = !dateFilter || pDate === dateFilter;
 
                     // 3. Tingkat
                     const matchTingkat = !tingkatFilter || pTingkat === tingkatFilter;
@@ -283,7 +277,7 @@
                         matchJenjang = isPAUD || isSD || isSMP;
                     }
 
-                    return matchSearch && matchYear && matchTingkat && matchJenjang;
+                    return matchSearch && matchDate && matchTingkat && matchJenjang;
                 });
             }
 

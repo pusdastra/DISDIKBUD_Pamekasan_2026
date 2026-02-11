@@ -163,34 +163,38 @@
 
         async function renderPending() {
             const tbody = document.getElementById('pendingTableBody');
-            const countBadge = document.getElementById('pendingCount'); // Changed from sidebarBadge to pendingCount
+            const countBadge = document.getElementById('pendingCount');
             const empty = document.getElementById('pendingEmpty');
-            const list = await Auth.getPendingUsers();
-
-            if (countBadge) {
-                if (list.length > 0) {
-                    countBadge.innerText = list.length + ' Pending'; // Updated text
-                    countBadge.classList.remove('d-none');
-                } else {
-                    countBadge.innerText = '0 Pending'; // Updated text
-                    countBadge.classList.remove('d-none'); // Keep visible even if 0
-                }
-            }
-
-            // STRICT PRIVACY: Only Super Admin can see pending requests
-            // Check if session email is the specific admin email
+            let list = await Auth.getPendingUsers();
             const session = Auth.check();
-            if (session.email !== 'disdikbudpamekasan08@gmail.com') {
+
+            // STRICT PRIVACY / LEVEL FILTERING
+            if (session.role !== 'admin') {
                 tbody.innerHTML = '';
                 if (countBadge) countBadge.innerText = '';
-                empty.innerHTML = '<div class="text-danger fw-bold p-3 bg-white rounded border border-danger"><i class="bi bi-lock-fill me-2"></i> Akses Terbatas. Hanya Admin Utama yang dapat memverifikasi akun.</div>';
+                empty.innerHTML = '<div class="text-danger fw-bold p-3 bg-white rounded border border-danger"><i class="bi bi-lock-fill me-2"></i> Akses Terbatas.</div>';
                 empty.classList.remove('d-none');
                 return;
             }
 
+            // Filter based on Admin Level
+            if (session.level_access !== 'ALL') {
+                list = list.filter(u => u.level === session.level_access);
+            }
+
+            if (countBadge) {
+                if (list.length > 0) {
+                    countBadge.innerText = list.length + ' Pending';
+                    countBadge.classList.remove('d-none');
+                } else {
+                    countBadge.innerText = '0 Pending';
+                    countBadge.classList.remove('d-none');
+                }
+            }
+
             if (list.length === 0) {
                 tbody.innerHTML = '';
-                empty.innerText = 'Tidak ada permintaan baru.';
+                empty.innerText = `Tidak ada permintaan baru untuk jenjang ${session.level_access === 'ALL' ? 'Apapun' : session.level_access}.`;
                 empty.classList.remove('d-none');
             } else {
                 empty.classList.add('d-none');
@@ -198,11 +202,14 @@
                 list.forEach(user => {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td class="ps-4 fw-bold">${user.name}</td>
+                        <td class="ps-4">
+                            <div class="fw-bold">${user.name}</div>
+                            <small class="text-muted"><i class="bi bi-mortarboard-fill me-1"></i>${user.level || 'Umum'}</small>
+                        </td>
                         <td>${user.email}</td>
                         <td><span class="badge bg-warning text-dark">Menunggu</span></td>
                         <td>
-                            <button onclick="window.approve('${user.email}')" class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i> Setujui</button>
+                            <button onclick="window.approve('${user.email}')" class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i></button>
                             <button onclick="window.reject('${user.email}')" class="btn btn-sm btn-outline-danger"><i class="bi bi-x-lg"></i></button>
                         </td>
                     `;

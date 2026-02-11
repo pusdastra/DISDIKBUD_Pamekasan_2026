@@ -78,6 +78,16 @@
             </button>
         </div>
 
+        <div class="row mb-4 g-2">
+            <div class="col-md-8">
+                <input type="text" id="searchInput" class="form-control"
+                    placeholder="Cari Siswa, Sekolah, atau Lomba...">
+            </div>
+            <div class="col-md-4">
+                <input type="date" id="filterDate" class="form-control">
+            </div>
+        </div>
+
         <div class="card border-0 shadow-sm">
             <div class="card-body">
                 <div class="table-responsive">
@@ -124,7 +134,10 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Asal Sekolah</label>
-                                <input type="text" id="inputSekolah" class="form-control" required>
+                                <input type="text" id="inputSekolah" class="form-control" list="schoolOptions" required>
+                                <datalist id="schoolOptions"></datalist>
+                                <div class="form-text small text-danger">Wajib cantumkan jenjang (misal: <b>SDN</b> 1
+                                    Proppo, <b>SMPN</b> 2 Pamekasan) agar data muncul.</div>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Tanggal</label>
@@ -188,23 +201,90 @@
         let isEditing = false;
         let editId = null;
 
+
+
         // Render Table
         async function renderTable() {
             const tbody = document.getElementById('prestasiTableBody');
             const emptyState = document.getElementById('emptyState');
+
+            // Filter Inputs
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const filterDate = document.getElementById('filterDate').value;
 
             tbody.innerHTML = '<tr><td colspan="8" class="text-center">Memuat data...</td></tr>';
 
             try {
                 let data = await DataStore.getPrestasi();
 
+
+                // Sort Newest First (by createdAt or tanggal)
+                data.sort((a, b) => {
+                    const dateA = new Date(a.createdAt || a.tanggal || 0);
+                    const dateB = new Date(b.createdAt || b.tanggal || 0);
+                    return dateB - dateA;
+                });
+
                 // --- ROLE BASED ACCESS CONTROL ---
                 if (session.role !== 'admin') {
-                    // Filter: Normalize both sides to be safe, though usually exact match expected.
-                    // Checking against both 'sekolah' and 'school' fields in data just in case.
                     data = data.filter(item => {
                         const sName = item.sekolah || item.school || '';
                         return sName === session.school;
+                    });
+                } else if (session.level_access && session.level_access !== 'ALL') {
+                    // ADMIN LEVEL FILTERING
+                    // Need to check School Level. Since Prestasi often just has School Name, we need to look it up.
+                    try {
+                        const schools = await DataStore.getSekolah();
+                        const schoolLevelMap = {};
+                        schools.forEach(s => {
+                            if (s.nama) schoolLevelMap[s.nama.trim().toLowerCase()] = s.jenjang;
+                        });
+
+                        data = data.filter(item => {
+                            const sName = (item.sekolah || item.school || '').trim().toLowerCase();
+                            const realLevel = schoolLevelMap[sName];
+
+                            // 0. Always Show Own Data (To prevent confusion if user inputs school name wrong)
+                            if (item.createdBy === session.uid) return true;
+
+                            // 1. Direct Match from Master Data
+                            if (realLevel) return realLevel === session.level_access;
+
+                            // 2. Fallback: Level Inference from Name (e.g., "SDN 1...")
+                            // This handles legacy data or schools not yet in Master Data
+                            const reSD = /\b(sd|sdn|sds|mi|min|mis|sekolah dasar|madrasah ibtidaiyah)\b/i;
+                            const reSMP = /\b(smp|smpn|smps|mts|mtsn|mtss|sekolah menengah|madrasah tsanawiyah)\b/i;
+                            const rePAUD = /\b(paud|tk|tkn|tks|ra|kb|ba|taman kanak|kelompok bermain|raudhatul)\b/i;
+
+                            const target = session.level_access.toLowerCase();
+                            if (target === 'sd' && reSD.test(sName)) return true;
+                            if (target === 'smp' && reSMP.test(sName)) return true;
+                            if (target === 'paud' && rePAUD.test(sName)) return true;
+
+                            return false;
+                        });
+                    } catch (err) {
+                        console.error("Error filtering by level:", err);
+                    }
+                }
+
+                // --- FILTERING LOGIC ---
+                if (searchTerm || filterDate) {
+                    data = data.filter(item => {
+                        const sName = (item.nama || item.siswa || '').toLowerCase();
+                        const sSchool = (item.sekolah || item.school || '').toLowerCase();
+                        const sLomba = (item.lomba || '').toLowerCase();
+                        const sDate = item.tanggal || '';
+
+                        const matchSearch = !searchTerm ||
+                            sName.includes(searchTerm) ||
+                            sSchool.includes(searchTerm) ||
+                            sLomba.includes(searchTerm);
+
+                        const matchDate = !filterDate || sDate === filterDate;
+
+                        return matchSearch && matchDate;
                     });
                 }
 
@@ -298,9 +378,27 @@
             }
         };
 
-        // Setup Modal for Non-Admin (Auto-fill School)
+        // Setup Modal for Non-Admin (Auto-fill School) & Populate Datalist
         const modalEl = document.getElementById('addPrestasiModal');
-        modalEl.addEventListener('show.bs.modal', function () {
+        modalEl.addEventListener('show.bs.modal', async function () {
+            // Populate Datalist
+            try {
+                let schools = await DataStore.getSekolah();
+
+                // DATA ISOLATION: Filter Suggestions based on Admin Level
+                if (session.role === 'admin' && session.level_access && session.level_access !== 'ALL') {
+                    schools = schools.filter(s => (s.jenjang || '').toUpperCase() === session.level_access.toUpperCase());
+                }
+
+                const datalist = document.getElementById('schoolOptions');
+                datalist.innerHTML = '';
+                schools.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.nama;
+                    datalist.appendChild(opt);
+                });
+            } catch (e) { console.error("Datalist error", e); }
+
             if (session.role !== 'admin') {
                 const schoolInput = document.getElementById('inputSekolah');
                 if (schoolInput) {
@@ -332,6 +430,38 @@
             document.querySelector('#addPrestasiModal button[type="submit"]').innerText = 'Simpan Prestasi';
         });
 
+        // Helper: Compress Image
+        function compressImage(file, maxWidth, quality) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = event => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const elem = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > maxWidth) {
+                            height = Math.round(height * (maxWidth / width));
+                            width = maxWidth;
+                        }
+
+                        elem.width = width;
+                        elem.height = height;
+                        const ctx = elem.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        // Output as JPEG with specified quality
+                        resolve(elem.toDataURL('image/jpeg', quality));
+                    };
+                    img.onerror = error => reject(error);
+                };
+                reader.onerror = error => reject(error);
+            });
+        }
+
         // Add/Update Submit
         document.getElementById('addPrestasiForm').addEventListener('submit', async function (e) {
             e.preventDefault();
@@ -344,24 +474,23 @@
             const fileInput = document.getElementById('inputBukti');
             const file = fileInput.files[0];
 
-            // Core data (aligned with Firestore Schema)
+            // Core data
             const newData = {
-                nama: document.getElementById('inputSiswa').value, // Schema uses 'nama' for student name usually, or 'siswa'
-                siswa: document.getElementById('inputSiswa').value, // redundancy to be safe
+                nama: document.getElementById('inputSiswa').value,
+                siswa: document.getElementById('inputSiswa').value,
                 sekolah: document.getElementById('inputSekolah').value,
                 tanggal: document.getElementById('inputTanggal').value,
                 lomba: document.getElementById('inputLomba').value,
                 tingkat: document.getElementById('inputTingkat').value,
                 peringkat: document.getElementById('inputPeringkat').value,
                 bukti: null,
-                createdAt: new Date().toISOString()
+                createdAt: new Date().toISOString(),
+                createdBy: session.uid || 'unknown' // Track ownership
             };
 
             const processSave = async () => {
                 try {
                     if (isEditing) {
-                        // If no new file, preserve old one. But we need to fetch old one first or trust backend? 
-                        // Simplest: Fetch old doc to get 'bukti' url if not provided.
                         if (!newData.bukti) {
                             const list = await DataStore.getPrestasi();
                             const old = list.find(d => d.id === editId);
@@ -391,12 +520,26 @@
 
             // Handle File
             if (file) {
-                const reader = new FileReader();
-                reader.onload = function (evt) {
-                    newData.bukti = evt.target.result; // Base64
+                // Limit: 5MB check before compression attempt
+                if (file.size > 5 * 1024 * 1024) {
+                    alert("File terlalu besar (Maks 5MB). Silahkan pilih foto lain.");
+                    btn.disabled = false;
+                    btn.innerText = originalText;
+                    return;
+                }
+
+                try {
+                    // Compress to max width 800px, quality 0.7
+                    // This typically results in < 100KB images, safe for Firestore.
+                    const compressedBase64 = await compressImage(file, 800, 0.7);
+                    newData.bukti = compressedBase64;
                     processSave();
-                };
-                reader.readAsDataURL(file);
+                } catch (err) {
+                    console.error("Compression Error:", err);
+                    alert("Gagal memproses gambar: " + err.message);
+                    btn.disabled = false;
+                    btn.innerText = originalText;
+                }
             } else {
                 processSave();
             }

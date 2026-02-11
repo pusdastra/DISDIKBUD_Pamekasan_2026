@@ -21,7 +21,7 @@ const SESSION_KEY = 'PUSDASTRA_SESSION';
 // --- AUTHENTICATION (Firestore Based) ---
 export const Auth = {
     // 1. Register
-    async register(email, schoolName, password) {
+    async register(email, schoolName, password, level) {
         try {
             // Check duplicate email
             const q = query(collection(db, "users"), where("email", "==", email));
@@ -38,6 +38,7 @@ export const Auth = {
                 email: email,
                 username: email.split('@')[0],
                 name: schoolName,
+                level: level, // Store School Level
                 password: password, // Note: In production, hash this!
                 role: isSuperAdmin ? 'admin' : 'operator',
                 status: isSuperAdmin ? 'active' : 'pending',
@@ -49,7 +50,7 @@ export const Auth = {
 
             return {
                 success: true,
-                message: 'Pendaftaran berhasil! Notifikasi verifikasi telah otomatis dikirim ke <b>disdikbudpamekasan08@gmail.com</b>. Silahkan tunggu persetujuan.'
+                message: 'Pendaftaran berhasil! Notifikasi verifikasi telah otomatis dikirim ke Admin Dinas. Silahkan tunggu persetujuan.'
             };
         } catch (error) {
             console.error("Register Error:", error);
@@ -60,6 +61,27 @@ export const Auth = {
     // 2. Login
     async login(email, password) {
         try {
+            // --- LEVEL ADMINS (HARDCODED FOR VERIFICATION) ---
+            const levelAdmins = {
+                'adminsd@pusdastra.net': { name: 'Admin SD', level: 'SD' },
+                'adminsmp@pusdastra.net': { name: 'Admin SMP', level: 'SMP' },
+                'adminpaud@pusdastra.net': { name: 'Admin PAUD', level: 'PAUD' }
+            };
+
+            if (levelAdmins[email] && password === 'admin123') {
+                const adminData = levelAdmins[email];
+                const sessionData = {
+                    uid: 'admin_' + adminData.level.toLowerCase(),
+                    email: email,
+                    name: adminData.name,
+                    role: 'admin',
+                    school: 'Dinas Pendidikan',
+                    level_access: adminData.level // Key for filtering permissions
+                };
+                sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
+                return { success: true, user: sessionData };
+            }
+
             // --- SUPER ADMIN BYPASS / AUTO-BOOTSTRAP ---
             // User requested "Permanent" login for this specific account
             if (email === 'disdikbudpamekasan08@gmail.com' && password === 'Disdikbud2026') {
@@ -92,7 +114,8 @@ export const Auth = {
                     email: email,
                     name: 'PUSDASTRA Pusat',
                     role: 'admin',
-                    school: 'Dinas Pendidikan'
+                    school: 'Dinas Pendidikan',
+                    level_access: 'ALL' // Super Admin sees all
                 };
                 sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
                 return { success: true, user: sessionData };
@@ -119,7 +142,8 @@ export const Auth = {
                 email: user.email,
                 name: user.name,
                 role: user.role,
-                school: user.school
+                school: user.school,
+                // Operators don't have level_access usually, or matches their own level
             };
             sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
             return { success: true, user: sessionData };

@@ -209,7 +209,7 @@
             tbody.innerHTML = '<tr><td colspan="6" class="text-center">Memuat data...</td></tr>';
 
             try {
-                const data = await DataStore.getSekolah();
+                let data = await DataStore.getSekolah();
 
                 tbody.innerHTML = '';
                 if (data.length === 0) {
@@ -229,6 +229,19 @@
                     } else if (btnAdd) {
                         btnAdd.style.display = 'block';
                     }
+                }
+
+                // Sort Newest First
+                data.sort((a, b) => {
+                    const dateA = new Date(a.createdAt || 0);
+                    const dateB = new Date(b.createdAt || 0);
+                    return dateB - dateA;
+                });
+
+                // --- LEVEL ACCESS FILTERING (For Admin SD/SMP/PAUD) ---
+                if (session.role === 'admin' && session.level_access && session.level_access !== 'ALL') {
+                    // Robust Case-Insensitive Check
+                    data = data.filter(d => (d.jenjang || '').toUpperCase() === session.level_access.toUpperCase());
                 }
 
                 data.forEach((item, index) => {
@@ -283,7 +296,8 @@
                 nama: document.getElementById('inputNamaSekolah').value,
                 jenjang: document.getElementById('inputJenjang').value,
                 status: document.getElementById('inputStatus').value,
-                kecamatan: document.getElementById('inputKecamatan').value
+                kecamatan: document.getElementById('inputKecamatan').value,
+                createdAt: new Date().toISOString()
             };
 
             // SECURITY: If not admin, FORCE the school name to be the session school name

@@ -47,17 +47,6 @@
         <source src="../assets/hero-video.mp4" type="video/mp4">
     </video>
 
-    <!-- Navbar Mobile -->
-    <nav class="navbar navbar-dark bg-transparent d-lg-none sticky-top p-3">
-        <div class="d-flex w-100 justify-content-between align-items-center">
-            <span class="navbar-brand mb-0 h1">PUSDASTRA Admin</span>
-            <button class="btn btn-outline-light"
-                onclick="document.getElementById('sidebar').classList.toggle('active')">
-                <i class="bi bi-list"></i>
-            </button>
-        </div>
-    </nav>
-
     <!-- Sidebar -->
     <div class="sidebar d-flex flex-column p-3" id="sidebar">
         <a href="../index.html"
@@ -68,7 +57,6 @@
             <li class="nav-item"><a href="dashboard.html" class="nav-link text-white"><i
                         class="bi bi-house-door me-2"></i> Dashboard</a></li>
             <li class="nav-item mt-3 text-white-50 small text-uppercase fw-bold ls-1">Master Data</li>
-            <!-- <li><a href="siswa.html" class="nav-link text-white"><i class="bi bi-people me-2"></i> Data Siswa</a></li> -->
             <li><a href="prestasi.html" class="nav-link text-white"><i class="bi bi-trophy me-2"></i> Data Prestasi</a>
             </li>
             <li><a href="sekolah.html" class="nav-link text-white"><i class="bi bi-building me-2"></i> Data Sekolah</a>
@@ -77,6 +65,8 @@
             <li><a href="laporan.html" class="nav-link active"><i class="bi bi-file-earmark-text me-2"></i> Laporan</a>
             </li>
             <li><a href="settings.html" class="nav-link text-white"><i class="bi bi-gear me-2"></i> Pengaturan</a></li>
+            <li class="mt-4"><button onclick="window.Auth.logout()"
+                    class="btn btn-outline-danger w-100 btn-sm">Logout</button></li>
         </ul>
     </div>
 
@@ -85,69 +75,70 @@
             <h2 class="h3 fw-bold">Laporan & Export Data</h2>
         </div>
 
-        <div class="row g-4">
-            <div class="col-md-6">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-header bg-white py-3">
-                        <h5 class="card-title mb-0 fw-bold">Rekap Prestasi Sekolah</h5>
-                    </div>
-                    <div class="card-body">
-                        <p class="text-muted small">Cetak laporan rekapitulasi jumlah prestasi per sekolah dalam periode
-                            tertentu.</p>
-                        <form>
-                            <div class="mb-3">
-                                <label class="form-label">Periode</label>
-                                <select class="form-select">
-                                    <option>Tahun Ajaran 2025/2026</option>
-                                    <option>Tahun Ajaran 2024/2025</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Format</label>
-                                <div class="d-flex gap-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="format1" checked>
-                                        <label class="form-check-label"><i class="bi bi-file-pdf text-danger"></i>
-                                            PDF</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="format1">
-                                        <label class="form-check-label"><i class="bi bi-file-excel text-success"></i>
-                                            Excel</label>
-                                    </div>
-                                </div>
-                            </div>
-                            <button type="button" class="btn btn-primary w-100"><i class="bi bi-download me-2"></i>
-                                Download Laporan</button>
-                        </form>
-                    </div>
-                </div>
+        <!-- Access Denied Message for Non-Admins -->
+        <div id="accessDenied" class="alert alert-danger d-none">
+            <h4 class="alert-heading"><i class="bi bi-slash-circle-fill me-2"></i>Akses Ditolak</h4>
+            <p>Maaf, halaman ini hanya dapat diakses oleh Administrator.</p>
+        </div>
+
+        <!-- Export Card -->
+        <div id="exportCard" class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0 fw-bold"><i class="bi bi-printer me-2"></i>Filter & Export Data</h5>
             </div>
-            <div class="col-md-6">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-header bg-white py-3">
-                        <h5 class="card-title mb-0 fw-bold">Rekap Prestasi Kecamatan</h5>
+            <div class="card-body">
+                <form id="exportForm">
+                    <div class="row g-3">
+                        <!-- Filter Jenjang -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">Jenjang Sekolah</label>
+                            <select id="filterJenjang" class="form-select">
+                                <option value="">Semua Jenjang</option>
+                                <option value="PAUD">PAUD/TK/KB/RA</option>
+                                <option value="SD">SD/MI</option>
+                                <option value="SMP">SMP/MTS</option>
+                            </select>
+                            <div class="form-text text-muted small" id="jenjangHelp">Pilih jenjang sekolah.</div>
+                        </div>
+
+                        <!-- Filter Tahun -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">Tahun</label>
+                            <input type="number" id="filterTahun" class="form-control" placeholder="Contoh: 2026">
+                        </div>
+
+                        <!-- Filter Bulan -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">Bulan</label>
+                            <select id="filterBulan" class="form-select">
+                                <option value="">Semua Bulan</option>
+                                <option value="01">Januari</option>
+                                <option value="02">Februari</option>
+                                <option value="03">Maret</option>
+                                <option value="04">April</option>
+                                <option value="05">Mei</option>
+                                <option value="06">Juni</option>
+                                <option value="07">Juli</option>
+                                <option value="08">Agustus</option>
+                                <option value="09">September</option>
+                                <option value="10">Oktober</option>
+                                <option value="11">November</option>
+                                <option value="12">Desember</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <p class="text-muted small">Cetak laporan statistik prestasi berdasarkan wilayah kecamatan.</p>
-                        <form>
-                            <div class="mb-3">
-                                <label class="form-label">Kecamatan</label>
-                                <select class="form-select">
-                                    <option>Semua Kecamatan</option>
-                                    <option>Pamekasan</option>
-                                    <option>Proppo</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Tahun</label>
-                                <input type="number" class="form-control" value="2026">
-                            </div>
-                            <button type="button" class="btn btn-primary w-100"><i class="bi bi-download me-2"></i>
-                                Download Laporan</button>
-                        </form>
+
+                    <hr class="my-4">
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-danger" onclick="downloadReport('pdf')">
+                            <i class="bi bi-file-pdf me-2"></i> Download PDF
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="downloadReport('excel')">
+                            <i class="bi bi-file-excel me-2"></i> Download Excel
+                        </button>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
     </main>
@@ -161,124 +152,76 @@
     <script src="../assets/js/particles.js"></script>
 
     <script type="module">
-        import { DataStore, Auth } from '../assets/js/data.js';
+        import { Auth } from '../assets/js/data.js';
+        import { Reports } from '../assets/js/reports.js';
+
+        // Expose
+        window.Auth = Auth;
 
         // Check Auth
         const session = Auth.check();
-        if (!session) window.location.href = '../login.html';
 
-        document.addEventListener('DOMContentLoaded', () => {
-            // Handle Download Button Click for "Rekap Prestasi Sekolah"
-            const btnDownload1 = document.querySelector('.card:nth-child(1) button.btn-primary');
-            if (btnDownload1) {
-                btnDownload1.addEventListener('click', async () => {
-                    const originalText = btnDownload1.innerHTML;
-                    btnDownload1.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
-                    btnDownload1.disabled = true;
-
-                    try {
-                        const format = document.querySelector('input[name="format1"]:checked').parentElement.textContent.trim();
-                        const data = await DataStore.getPrestasi(); // Fetch all data
-
-                        // Logic: Group by School or just dump list? 
-                        // Title says "Rekap Prestasi Sekolah", implying a summary or full list.
-                        // Let's do a full list for now as it's most useful.
-
-                        if (format.includes('Excel')) {
-                            exportExcel(data, "Laporan_Prestasi");
-                        } else {
-                            exportPDF(data, "Laporan_Prestasi");
-                        }
-                    } catch (e) {
-                        console.error(e);
-                        alert("Gagal mendownload: " + e.message);
-                    } finally {
-                        btnDownload1.innerHTML = originalText;
-                        btnDownload1.disabled = false;
-                    }
-                });
-            }
-
-            // Handle Download Button Click for "Rekap Prestasi Kecamatan"
-            // (Reusing same logic for simplicity, could filter later)
-            const btnDownload2 = document.querySelector('.card:nth-child(2) button.btn-primary');
-            if (btnDownload2) {
-                btnDownload2.addEventListener('click', async () => {
-                    const originalText = btnDownload2.innerHTML;
-                    btnDownload2.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
-                    btnDownload2.disabled = true;
-
-                    try {
-                        const data = await DataStore.getPrestasi();
-                        // Here we could filter by kecamatan if that data existed in the object.
-                        // For now exporting full list.
-                        exportExcel(data, "Laporan_Prestasi_Wilayah");
-                    } catch (e) {
-                        console.error(e);
-                        alert("Gagal mendownload: " + e.message);
-                    } finally {
-                        btnDownload2.innerHTML = originalText;
-                        btnDownload2.disabled = false;
-                    }
-                });
-            }
-        });
-
-        function exportExcel(data, filename) {
-            // Prepare Data
-            const rows = data.map(item => ({
-                "Tanggal": item.tanggal,
-                "Nama Siswa": item.nama || item.siswa,
-                "Sekolah": item.sekolah || item.school,
-                "Lomba": item.lomba,
-                "Tingkat": item.tingkat,
-                "Peringkat": item.peringkat
-            }));
-
-            const worksheet = XLSX.utils.json_to_sheet(rows);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Data Prestasi");
-
-            // Fix width
-            const wscols = [
-                { wch: 15 }, { wch: 25 }, { wch: 25 }, { wch: 25 }, { wch: 15 }, { wch: 15 }
-            ];
-            worksheet['!cols'] = wscols;
-
-            XLSX.writeFile(workbook, `${filename}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        // 1. Redirect if not logged in
+        if (!session) {
+            window.location.href = '../login.html';
         }
 
-        function exportPDF(data, filename) {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
+        // 2. Strict Access Control: ONLY ADMIN
+        if (session.role !== 'admin') {
+            document.getElementById('exportCard').classList.add('d-none');
+            document.getElementById('accessDenied').classList.remove('d-none');
+        } else {
+            // Admin Access Logic
+            const jenjangSelect = document.getElementById('filterJenjang');
+            const currentYear = new Date().getFullYear();
+            document.getElementById('filterTahun').value = currentYear;
 
-            doc.text("Laporan Data Prestasi PUSDASTRA", 14, 15);
-            doc.setFontSize(10);
-            doc.text(`Dicetak pada: ${new Date().toLocaleDateString()}`, 14, 22);
-
-            const tableColumn = ["Tanggal", "Siswa", "Sekolah", "Lomba", "Tingkat", "Peringkat"];
-            const tableRows = [];
-
-            data.forEach(item => {
-                const row = [
-                    item.tanggal,
-                    item.nama || item.siswa,
-                    item.sekolah || item.school,
-                    item.lomba,
-                    item.tingkat,
-                    item.peringkat
-                ];
-                tableRows.push(row);
-            });
-
-            doc.autoTable({
-                head: [tableColumn],
-                body: tableRows,
-                startY: 25,
-            });
-
-            doc.save(`${filename}_${new Date().toISOString().slice(0, 10)}.pdf`);
+            // If Admin limits exist (e.g. Admin SD), lock the Jenjang filter
+            if (session.level_access && session.level_access !== 'ALL') {
+                jenjangSelect.value = session.level_access;
+                jenjangSelect.disabled = true;
+                document.getElementById('jenjangHelp').innerText = `Anda hanya dapat mengakses laporan untuk jenjang ${session.level_access}.`;
+            }
         }
+
+        // Download Logic
+        window.downloadReport = async function (format) {
+            const btn = event.target.closest('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+            btn.disabled = true;
+
+            try {
+                // Get Filter Values from UI
+                let filterJenjang = document.getElementById('filterJenjang').value;
+                const filterTahun = document.getElementById('filterTahun').value;
+                const filterBulan = document.getElementById('filterBulan').value;
+
+                // Enforce Session Level if restricted (Double Check)
+                if (session.level_access && session.level_access !== 'ALL') {
+                    filterJenjang = session.level_access;
+                }
+
+                // Call Reports Module
+                const result = await Reports.download(format, {
+                    jenjang: filterJenjang,
+                    tahun: filterTahun,
+                    bulan: filterBulan
+                });
+
+                if (!result.success && result.message) {
+                    alert(result.message);
+                }
+
+            } catch (err) {
+                console.error(err);
+                alert("Gagal memproses laporan: " + err.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        };
     </script>
+</body>
 
 </html>
