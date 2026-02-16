@@ -155,10 +155,17 @@ export const Auth = {
     },
 
     // 3. Get Pending Users (for Admin)
-    async getPendingUsers() {
+    async getPendingUsers(levelAccess = 'ALL') {
         const q = query(collection(db, "users"), where("status", "==", "pending"));
         const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        let users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // Strict Level Filtering
+        if (levelAccess && levelAccess !== 'ALL') {
+            users = users.filter(u => (u.level || '').toUpperCase() === levelAccess.toUpperCase());
+        }
+
+        return users;
     },
 
     // 4. Approve User

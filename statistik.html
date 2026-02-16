@@ -78,6 +78,20 @@
         <div class="container text-center">
             <h1 class="fw-bold text-dark mb-2">Statistik Prestasi</h1>
             <p class="text-muted">Data visualisasi perkembangan prestasi siswa di seluruh wilayah.</p>
+
+            <div class="row justify-content-center mt-4">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="bi bi-funnel"></i> Filter Jenjang</span>
+                        <select id="statFilterJenjang" class="form-select">
+                            <option value="ALL">Semua Jenjang</option>
+                            <option value="SD">SD / MI</option>
+                            <option value="SMP">SMP / MTs</option>
+                            <option value="PAUD">PAUD / TK</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
         </div>
     </header>
 
@@ -196,27 +210,62 @@
     <script type="module">
         import { DataStore } from './assets/js/data.js';
 
+        let allPrestasiData = [];
+        let chartInstances = {};
+
         document.addEventListener("DOMContentLoaded", async () => {
             try {
                 // Fetch Data
-                const prestasiList = await DataStore.getPrestasi();
+                allPrestasiData = await DataStore.getPrestasi();
                 const sekolahList = await DataStore.getSekolah(); // If needed for total count
 
-                // Update Top Cards
-                animateValue("statTotalPrestasi", 0, prestasiList.length, 2000);
-                animateValue("statTotalSekolah", 0, sekolahList.length, 2000);
+                // Initial Render (ALL)
+                updateDashboard('ALL');
 
-                // Process Data for Charts
-                const stats = processStats(prestasiList);
-
-                // Render Charts
-                renderCharts(stats);
-                renderTopSchools(stats.topSchools);
+                // Filter Event
+                document.getElementById('statFilterJenjang').addEventListener('change', function () {
+                    updateDashboard(this.value);
+                });
 
             } catch (error) {
                 console.error("Error loading stats:", error);
             }
         });
+
+        function updateDashboard(filterLevel) {
+            // Filter Data
+            let filteredData = allPrestasiData;
+
+            if (filterLevel !== 'ALL') {
+                // Regex Definitions
+                const reSD = /\b(sd|sdn|sds|mi|min|mis|sekolah dasar|madrasah ibtidaiyah)\b/i;
+                const reSMP = /\b(smp|smpn|smps|mts|mtsn|mtss|sekolah menengah|madrasah tsanawiyah)\b/i;
+                const rePAUD = /\b(paud|tk|tkn|tks|ra|kb|ba|taman kanak|kelompok bermain|raudhatul)\b/i;
+
+                filteredData = allPrestasiData.filter(p => {
+                    const sName = (p.sekolah || p.school || '').trim().toLowerCase();
+                    if (filterLevel === 'SD') return reSD.test(sName);
+                    if (filterLevel === 'SMP') return reSMP.test(sName);
+                    if (filterLevel === 'PAUD') return rePAUD.test(sName);
+                    return false;
+                });
+            }
+
+            // Update Top Cards
+            animateValue("statTotalPrestasi", parseInt(document.getElementById("statTotalPrestasi").innerText), filteredData.length, 1000);
+
+            // Note: Total Sekolah is hard to update precisely without re-fetching or mapping unique schools from filtered data
+            // Let's compute unique schools from the filters
+            const uniqueSchools = new Set(filteredData.map(p => (p.sekolah || p.school || '').trim().toLowerCase()));
+            animateValue("statTotalSekolah", parseInt(document.getElementById("statTotalSekolah").innerText), uniqueSchools.size, 1000);
+
+            // Process for Charts
+            const stats = processStats(filteredData);
+
+            // Render
+            renderCharts(stats);
+            renderTopSchools(stats.topSchools);
+        }
 
         function animateValue(id, start, end, duration) {
             if (start === end) return;
@@ -226,6 +275,12 @@
             let current = start;
             const increment = end > start ? 1 : -1;
             const stepTime = Math.abs(Math.floor(duration / range));
+
+            // Safety for infinite/NaN
+            if (!stepTime || stepTime === Infinity) {
+                obj.innerText = end;
+                return;
+            }
 
             const timer = setInterval(function () {
                 current += increment;
@@ -248,10 +303,15 @@
                 if (y !== 'Unknown') years[y] = (years[y] || 0) + 1;
 
                 // Jenjang (Infer from School Name)
-                const sName = (p.sekolah || p.school || '').toUpperCase();
-                if (sName.includes('SD') || sName.includes('MI')) jenjang['SD']++;
-                else if (sName.includes('SMP') || sName.includes('MTS')) jenjang['SMP']++;
-                else if (sName.includes('PAUD') || sName.includes('TK') || sName.includes('KB') || sName.includes('RA')) jenjang['PAUD']++;
+                // Jenjang (Infer from School Name)
+                const sName = (p.sekolah || p.school || '').trim().toLowerCase();
+                const reSD = /\b(sd|sdn|sds|mi|min|mis|sekolah dasar|madrasah ibtidaiyah)\b/i;
+                const reSMP = /\b(smp|smpn|smps|mts|mtsn|mtss|sekolah menengah|madrasah tsanawiyah)\b/i;
+                const rePAUD = /\b(paud|tk|tkn|tks|ra|kb|ba|taman kanak|kelompok bermain|raudhatul)\b/i;
+
+                if (reSD.test(sName)) jenjang['SD']++;
+                else if (reSMP.test(sName)) jenjang['SMP']++;
+                else if (rePAUD.test(sName)) jenjang['PAUD']++;
 
                 // Tingkat
                 const t = p.tingkat || 'Unknown';
@@ -271,12 +331,17 @@
         }
 
         function renderCharts(stats) {
+            // Destroy OLD Charts to prevent overlay
+            if (chartInstances.yearly) chartInstances.yearly.destroy();
+            if (chartInstances.jenjang) chartInstances.jenjang.destroy();
+            if (chartInstances.tingkat) chartInstances.tingkat.destroy();
+
             // Yearly Trend
             const yearLabels = Object.keys(stats.years).sort();
             const yearData = yearLabels.map(y => stats.years[y]);
 
             if (document.getElementById('chartYearly')) {
-                new Chart(document.getElementById('chartYearly'), {
+                chartInstances.yearly = new Chart(document.getElementById('chartYearly'), {
                     type: 'line',
                     data: {
                         labels: yearLabels,
@@ -295,7 +360,7 @@
 
             // Jenjang Pie
             if (document.getElementById('chartJenjang')) {
-                new Chart(document.getElementById('chartJenjang'), {
+                chartInstances.jenjang = new Chart(document.getElementById('chartJenjang'), {
                     type: 'doughnut',
                     data: {
                         labels: ['SD', 'SMP', 'PAUD'],
@@ -310,7 +375,7 @@
 
             // Tingkat Bar
             if (document.getElementById('chartTingkat')) {
-                new Chart(document.getElementById('chartTingkat'), {
+                chartInstances.tingkat = new Chart(document.getElementById('chartTingkat'), {
                     type: 'bar',
                     data: {
                         labels: ['Kecamatan', 'Kabupaten', 'Provinsi', 'Nasional', 'Internasional'],
@@ -344,7 +409,6 @@
             container.innerHTML = '';
             topList.forEach((item, index) => {
                 const [name, count] = item;
-                const badgeColor = index === 0 ? 'warning' : (index === 1 ? 'secondary' : 'light');
                 const html = `
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                         <div>

@@ -112,9 +112,20 @@
 
     <!-- Main Content -->
     <main class="main-content p-4">
-        <!-- Header -->
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
             <h1 class="h2">Dashboard Overview</h1>
+            <div class="btn-toolbar mb-2 mb-md-0">
+                <div class="input-group me-2">
+                    <span class="input-group-text bg-white border-0"><i class="bi bi-funnel"></i></span>
+                    <select id="dashboardFilterJenjang" class="form-select border-0 bg-light fw-bold"
+                        style="cursor: pointer;">
+                        <option value="ALL">Semua Jenjang</option>
+                        <option value="SD">SD / MI</option>
+                        <option value="SMP">SMP / MTs</option>
+                        <option value="PAUD">PAUD / TK</option>
+                    </select>
+                </div>
+            </div>
         </div>
 
         <!-- SECURE INBOX SECTION (Hidden by default) -->
@@ -185,9 +196,18 @@
         <div class="row mb-5">
             <div class="col-12">
                 <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-white py-3 border-bottom">
+                    <div
+                        class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
                         <h5 class="card-title mb-0 fw-bold text-primary"><i
                                 class="bi bi-star-fill text-warning me-2"></i> Sekolah Paling Unggul</h5>
+                        <select id="filterUnggulanJenjang"
+                            class="form-select form-select-sm border-0 bg-light fw-bold text-secondary"
+                            style="width: auto; cursor: pointer;">
+                            <option value="ALL">Semua Jenjang</option>
+                            <option value="SD">Top SD / MI</option>
+                            <option value="SMP">Top SMP / MTs</option>
+                            <option value="PAUD">Top PAUD / TK</option>
+                        </select>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
@@ -243,76 +263,208 @@
 
                         document.getElementById('adminNameDisplay').innerText = session.name || session.username;
 
-                        // Load Stats from Data Engine
+                        // --- 0. INITIALIZE FILTER & UI ---
+                        const filterContainer = document.querySelector('.btn-toolbar .input-group');
+                        const filterDropdown = document.getElementById('dashboardFilterJenjang');
+                        let currentFilter = 'ALL';
+
+                        // If Admin has specific level, HIDE dropdown and show Badge
+                        if (session.level_access && session.level_access !== 'ALL') {
+                            currentFilter = session.level_access;
+
+                            // Replace Dropdown with Badge
+                            if (filterContainer) {
+                                filterContainer.innerHTML = `
+                                    <span class="badge bg-warning text-dark fs-6 px-3 py-2">
+                                        <i class="bi bi-building me-1"></i> Admin ${session.level_access}
+                                    </span>
+                                `;
+                            }
+                        } else {
+                            // Event Listener for Super Admin
+                            filterDropdown.addEventListener('change', () => {
+                                currentFilter = filterDropdown.value;
+                                renderDashboardData();
+                            });
+                        }
+
+
+                        // Data Storage
+                        let rawPrestasi = [];
+                        let rawSekolah = [];
+                        let rawPending = [];
+                        let schoolLevelMap = {};
+
                         try {
-                            const [stats, prestasiList] = await Promise.all([
-                                DataStore.getStats(),
-                                DataStore.getPrestasi() // We need full list for calculating Top Schools locally
+                            const [p, s, u] = await Promise.all([
+                                DataStore.getPrestasi(),
+                                DataStore.getSekolah(),
+                                Auth.getPendingUsers(session.level_access || 'ALL')
                             ]);
+                            rawPrestasi = p;
+                            rawSekolah = s;
+                            rawPending = u;
 
-                            // 1. Update Cards (Reordered priority logic)
-                            // Prestasi First!
-                            document.getElementById('statPrestasi').innerText = stats.totalPrestasi;
-                            document.getElementById('statSekolah').innerText = stats.totalSekolah;
+                            // Build Map for fast lookup
+                            rawSekolah.forEach(itm => {
+                                if (itm.nama) schoolLevelMap[itm.nama.trim().toLowerCase()] = itm.jenjang;
+                            });
 
-                            // 2. Compute Top Schools (Sekolah Unggul)
+                            // Initial Render
+                            renderDashboardData();
+
+                        } catch (e) {
+                            console.error("Data Load Error", e);
+                        }
+
+                        function renderDashboardData() {
+                            // --- 1. FILTER DATA BY LEVEL (Current Filter) ---
+                            let filteredPrestasi = rawPrestasi;
+                            let filteredSekolah = rawSekolah;
+
+                            const level = currentFilter;
+
+                            if (level !== 'ALL') {
+                                // Filter Prestasi
+                                filteredPrestasi = rawPrestasi.filter(p => {
+                                    const sName = (p.sekolah || p.school || '').trim().toLowerCase();
+
+                                    // 0. Own Data (If session is restricted, strict rules apply. If Super Admin toggling, show based on toggle)
+                                    // If Super Admin is viewing "SD", they should see SD data.
+
+                                    // 1. Map Check
+                                    const realLevel = schoolLevelMap[sName];
+                                    if (realLevel) return realLevel.toUpperCase() === level.toUpperCase();
+
+                                    // 2. Regex Fallback
+                                    const reSD = /\b(sd|sdn|sds|mi|min|mis|sekolah dasar|madrasah ibtidaiyah)\b/i;
+                                    const reSMP = /\b(smp|smpn|smps|mts|mtsn|mtss|sekolah menengah|madrasah tsanawiyah)\b/i;
+                                    const rePAUD = /\b(paud|tk|tkn|tks|ra|kb|ba|taman kanak|kelompok bermain|raudhatul)\b/i;
+
+                                    const target = level.toLowerCase();
+                                    if (target === 'sd' && reSD.test(sName)) return true;
+                                    if (target === 'smp' && reSMP.test(sName)) return true;
+                                    if (target === 'paud' && rePAUD.test(sName)) return true;
+
+                                    return false;
+                                });
+
+                                // Filter Sekolah
+                                filteredSekolah = rawSekolah.filter(s => (s.jenjang || '').toUpperCase() === level.toUpperCase());
+                            }
+
+                            // --- 2. UPDATE UI STATS ---
+                            document.getElementById('statPrestasi').innerText = filteredPrestasi.length;
+                            document.getElementById('statSekolah').innerText = filteredSekolah.length;
+
+                            // --- 3. COMPUTE TOP SCHOOLS (From Filtered Data) ---
+                            // Update Local Filter UI to match Global Filter
+                            const tableFilter = document.getElementById('filterUnggulanJenjang');
+                            if (tableFilter) {
+                                tableFilter.value = currentFilter;
+
+                                // Optional: Disable local filter if Global is specific (to avoid confusion)
+                                // or just let it be synced. Let's just sync it for now.
+                                // If Global is set, we probably want to enforce it on the table too.
+                                if (currentFilter !== 'ALL') {
+                                    tableFilter.disabled = true;
+                                } else {
+                                    tableFilter.disabled = false;
+                                }
+                            }
+
+                            // Render Table with Current Filter
+                            renderTableOnly(currentFilter);
+                        }
+
+                        // --- 3B. SPECIFIC TABLE RENDER FUNCTION ---
+                        function renderTableOnly(filterLevel) {
+                            const topSchoolContainer = document.getElementById('topSchoolsBody');
+                            if (!topSchoolContainer) return;
+
+                            let dataToProcess = rawPrestasi;
+
+                            // Filter by SPECIFIC Table Filter
+                            if (filterLevel !== 'ALL') {
+                                dataToProcess = rawPrestasi.filter(p => {
+                                    const sName = (p.sekolah || p.school || '').trim().toLowerCase();
+                                    const realLevel = schoolLevelMap[sName];
+                                    if (realLevel) return realLevel.toUpperCase() === filterLevel;
+
+                                    // Fallback: Robust Regex
+                                    // Relaxed regex to catch "sd1" (no word boundary at end if followed by digit)
+                                    // But standard "SDN 1" needs boundary. 
+                                    // Let's stick to robust but maybe handle the edge case "sd" + digit if common? 
+                                    // No, strict word boundary is better for "MASDAR" vs "SD". 
+                                    // User's "sd1" is likely poor test data. I will keep strict regex for accuracy.
+                                    const reSD = /\b(sd|sdn|sds|mi|min|mis|sekolah dasar|madrasah ibtidaiyah)\b/i;
+                                    const reSMP = /\b(smp|smpn|smps|mts|mtsn|mtss|sekolah menengah|madrasah tsanawiyah)\b/i;
+                                    const rePAUD = /\b(paud|tk|tkn|tks|ra|kb|ba|taman kanak|kelompok bermain|raudhatul)\b/i;
+
+                                    if (filterLevel === 'SD') return reSD.test(sName);
+                                    if (filterLevel === 'SMP') return reSMP.test(sName);
+                                    if (filterLevel === 'PAUD') return rePAUD.test(sName);
+                                    return false;
+                                });
+                            }
+
                             const schoolCounts = {};
-                            prestasiList.forEach(p => {
+                            dataToProcess.forEach(p => {
                                 const sName = p.sekolah || p.school || 'Unknown';
                                 schoolCounts[sName] = (schoolCounts[sName] || 0) + 1;
                             });
 
                             const sortedSchools = Object.entries(schoolCounts)
                                 .sort((a, b) => b[1] - a[1])
-                                .slice(0, 5); // Top 5
+                                .slice(0, 5);
 
-                            // Render Top Schools
-                            const topSchoolContainer = document.getElementById('topSchoolsBody');
-                            if (topSchoolContainer) {
-                                topSchoolContainer.innerHTML = '';
-                                if (sortedSchools.length === 0) {
-                                    topSchoolContainer.innerHTML = '<tr><td colspan="3" class="text-center text-muted">Belum ada data prestasi.</td></tr>';
-                                } else {
-                                    sortedSchools.forEach((item, index) => {
-                                        const rank = index + 1;
-                                        const medal = rank === 1 ? '🥇' : (rank === 2 ? '🥈' : (rank === 3 ? '🥉' : `#${rank}`));
-                                        const row = `
-                                            <tr>
-                                                <td class="text-center fs-5">${medal}</td>
-                                                <td class="fw-bold">${item[0]}</td>
-                                                <td class="text-center"><span class="badge bg-primary rounded-pill">${item[1]} Prestasi</span></td>
-                                            </tr>
-                                        `;
-                                        topSchoolContainer.innerHTML += row;
-                                    });
-                                }
+                            topSchoolContainer.innerHTML = '';
+                            if (sortedSchools.length === 0) {
+                                topSchoolContainer.innerHTML = '<tr><td colspan="3" class="text-center text-muted">Belum ada data prestasi untuk jenjang ini.</td></tr>';
+                            } else {
+                                sortedSchools.forEach((item, index) => {
+                                    const rank = index + 1;
+                                    const medal = rank === 1 ? '🥇' : (rank === 2 ? '🥈' : (rank === 3 ? '🥉' : `#${rank}`));
+                                    const row = `
+                                        <tr>
+                                            <td class="text-center fs-5">${medal}</td>
+                                            <td class="fw-bold">${item[0]}</td>
+                                            <td class="text-center"><span class="badge bg-primary rounded-pill">${item[1]} Prestasi</span></td>
+                                        </tr>
+                                    `;
+                                    topSchoolContainer.innerHTML += row;
+                                });
                             }
-
-                        } catch (e) {
-                            console.error("Stats Error", e);
                         }
 
-                        // Check Pending Users (Notification Logic)
-                        // Check Pending Users (Notification Logic) - STRICT PRIVACY FOR ADMIN ONLY
-                        const pendingUsers = await Auth.getPendingUsers();
+                        // Event Listener for Local Table Filter
+                        const tableFilter = document.getElementById('filterUnggulanJenjang');
+                        if (tableFilter) {
+                            tableFilter.addEventListener('change', () => {
+                                renderTableOnly(tableFilter.value);
+                            });
+                        }
 
-                        // Only show if logged in as the specific Super Admin
-                        if (session.email === 'disdikbudpamekasan08@gmail.com' && pendingUsers.length > 0) {
+                        // --- 4. NOTIFICATIONS (PENDING USERS) ---
+                        // Only Admins
+                        if (session.role === 'admin' && rawPending.length > 0) {
                             // Update Sidebar Badge
                             const badge = document.getElementById('sidebarBadge');
                             if (badge) {
-                                badge.innerText = pendingUsers.length;
+                                badge.innerText = rawPending.length;
                                 badge.classList.remove('d-none');
                             }
 
                             // Show Toast
                             const toastEl = document.getElementById('liveToast');
                             if (toastEl) {
-                                document.getElementById('toastCount').innerText = pendingUsers.length;
+                                document.getElementById('toastCount').innerText = rawPending.length;
                                 const toast = new bootstrap.Toast(toastEl);
                                 toast.show();
                             }
                         }
+
+
 
                         // --- SECURE INBOX LOGIC ---
                         // Only specific Admin can see messages

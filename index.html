@@ -100,6 +100,19 @@
                 <div class="col-lg-6">
                     <div class="hero-stats p-4 rounded-4"
                         style="background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.6);">
+
+                        <!-- Filter Dropdown -->
+                        <div class="mb-3 text-center">
+                            <select id="heroFilterJenjang"
+                                class="form-select form-select-sm border-0 bg-white shadow-sm fw-bold text-primary mx-auto"
+                                style="width: auto; cursor: pointer;">
+                                <option value="ALL">Semua Jenjang</option>
+                                <option value="SD">Jenjang SD</option>
+                                <option value="SMP">Jenjang SMP</option>
+                                <option value="PAUD">Jenjang PAUD</option>
+                            </select>
+                        </div>
+
                         <div class="row g-3 text-center">
                             <div class="col-6">
                                 <h3 class="fw-bold text-warning" id="heroStatPrestasi">0</h3>
@@ -158,7 +171,7 @@
                 </div>
             </div>
         </div>
-    </section>  
+    </section>
 
     <!-- Footer -->
     <footer class="pb-4">
@@ -190,25 +203,54 @@
         // Load Stats on Start
         document.addEventListener("DOMContentLoaded", async () => {
             try {
-                // Fetch Stats
-                const stats = await DataStore.getStats();
+                // Fetch All Data for Client-Side Filtering
+                const [allPrestasi, allSekolah] = await Promise.all([
+                    DataStore.getPrestasi(),
+                    DataStore.getSekolah()
+                ]);
 
-                console.log("Stats loaded:", stats); // Debug
+                // Initial Render (ALL)
+                updateHeroStats('ALL', allPrestasi, allSekolah);
 
-                // Animate Numbers
-                // Use || 0 to fallback if undefined
-                animateValue("heroStatPrestasi", 0, stats.totalPrestasi || 0, 2000);
-                animateValue("heroStatSekolah", 0, stats.totalSekolah || 0, 2000);
+                // Event Listener
+                document.getElementById('heroFilterJenjang').addEventListener('change', function () {
+                    updateHeroStats(this.value, allPrestasi, allSekolah);
+                });
 
             } catch (error) {
                 console.error("Failed to load stats:", error);
-                // Fallback to simple text if animation fails
-                const pEl = document.getElementById('heroStatPrestasi');
-                const sEl = document.getElementById('heroStatSekolah');
-                if (pEl) pEl.innerText = "0";
-                if (sEl) sEl.innerText = "0";
             }
         });
+
+        function updateHeroStats(level, prestasiData, sekolahData) {
+            let pCount = prestasiData.length;
+            let sCount = sekolahData.length;
+
+            if (level !== 'ALL') {
+                // Regex Definitions (Same as Dashboard)
+                const reSD = /\b(sd|sdn|sds|mi|min|mis|sekolah dasar|madrasah ibtidaiyah)\b/i;
+                const reSMP = /\b(smp|smpn|smps|mts|mtsn|mtss|sekolah menengah|madrasah tsanawiyah)\b/i;
+                const rePAUD = /\b(paud|tk|tkn|tks|ra|kb|ba|taman kanak|kelompok bermain|raudhatul)\b/i;
+
+                // Filter Prestasi (by School Name Inference)
+                const pFiltered = prestasiData.filter(p => {
+                    const sName = (p.sekolah || p.school || '').trim().toLowerCase();
+                    if (level === 'SD') return reSD.test(sName);
+                    if (level === 'SMP') return reSMP.test(sName);
+                    if (level === 'PAUD') return rePAUD.test(sName);
+                    return false;
+                });
+                pCount = pFiltered.length;
+
+                // Filter Sekolah (by Jenjang Tag)
+                const sFiltered = sekolahData.filter(s => (s.jenjang || '').toUpperCase() === level);
+                sCount = sFiltered.length;
+            }
+
+            // Animate
+            animateValue("heroStatPrestasi", parseInt(document.getElementById("heroStatPrestasi").innerText), pCount, 1000);
+            animateValue("heroStatSekolah", parseInt(document.getElementById("heroStatSekolah").innerText), sCount, 1000);
+        }
 
         function animateValue(id, start, end, duration) {
             if (start === end) {

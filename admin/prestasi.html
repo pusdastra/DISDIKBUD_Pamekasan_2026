@@ -72,7 +72,10 @@
 
     <main class="main-content p-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="h3 fw-bold">Manajemen Prestasi</h2>
+            <div>
+                <h2 class="h3 fw-bold d-inline-block">Manajemen Prestasi</h2>
+                <span id="adminLevelBadge" class="badge bg-warning text-dark align-top ms-2 d-none"></span>
+            </div>
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPrestasiModal">
                 <i class="bi bi-plus-lg me-1"></i> Tambah Prestasi
             </button>
@@ -197,6 +200,15 @@
         const session = Auth.check();
         if (!session) window.location.href = '../login.html';
 
+        // --- LEVEL BADGE UI ---
+        if (session.level_access && session.level_access !== 'ALL') {
+            const badge = document.getElementById('adminLevelBadge');
+            if (badge) {
+                badge.innerHTML = `<i class="bi bi-lock-fill"></i> Admin ${session.level_access}`;
+                badge.classList.remove('d-none');
+            }
+        }
+
         // Global State
         let isEditing = false;
         let editId = null;
@@ -227,9 +239,11 @@
 
                 // --- ROLE BASED ACCESS CONTROL ---
                 if (session.role !== 'admin') {
+                    // STRICT ISOLATION: School Operator sees ONLY their own school's data
                     data = data.filter(item => {
-                        const sName = item.sekolah || item.school || '';
-                        return sName === session.school;
+                        const sName = (item.sekolah || item.school || '').trim().toLowerCase();
+                        const mySchool = (session.school || '').trim().toLowerCase();
+                        return sName === mySchool;
                     });
                 } else if (session.level_access && session.level_access !== 'ALL') {
                     // ADMIN LEVEL FILTERING
@@ -245,22 +259,36 @@
                             const sName = (item.sekolah || item.school || '').trim().toLowerCase();
                             const realLevel = schoolLevelMap[sName];
 
-                            // 0. Always Show Own Data (To prevent confusion if user inputs school name wrong)
-                            if (item.createdBy === session.uid) return true;
-
-                            // 1. Direct Match from Master Data
-                            if (realLevel) return realLevel === session.level_access;
-
-                            // 2. Fallback: Level Inference from Name (e.g., "SDN 1...")
-                            // This handles legacy data or schools not yet in Master Data
+                            // 0. Definitions
                             const reSD = /\b(sd|sdn|sds|mi|min|mis|sekolah dasar|madrasah ibtidaiyah)\b/i;
                             const reSMP = /\b(smp|smpn|smps|mts|mtsn|mtss|sekolah menengah|madrasah tsanawiyah)\b/i;
                             const rePAUD = /\b(paud|tk|tkn|tks|ra|kb|ba|taman kanak|kelompok bermain|raudhatul)\b/i;
 
                             const target = session.level_access.toLowerCase();
+
+                            // 1. Strict Exclusion (If data definitely belongs to another level, HIDE IT)
+                            if (target === 'sd') {
+                                if (realLevel === 'SMP' || realLevel === 'PAUD') return false;
+                                if (reSMP.test(sName) || rePAUD.test(sName)) return false;
+                            }
+                            if (target === 'smp') {
+                                if (realLevel === 'SD' || realLevel === 'PAUD') return false;
+                                if (reSD.test(sName) || rePAUD.test(sName)) return false;
+                            }
+                            if (target === 'paud') {
+                                if (realLevel === 'SD' || realLevel === 'SMP') return false;
+                                if (reSD.test(sName) || reSMP.test(sName)) return false;
+                            }
+
+                            // 2. Inclusion (If data definitely matches my level, SHOW IT)
+                            if (realLevel === session.level_access) return true;
                             if (target === 'sd' && reSD.test(sName)) return true;
                             if (target === 'smp' && reSMP.test(sName)) return true;
                             if (target === 'paud' && rePAUD.test(sName)) return true;
+
+                            // 3. Fallback (Ambiguous data created by me)
+                            // Only show if it didn't trigger the exclusions above.
+                            if (item.createdBy === session.uid) return true;
 
                             return false;
                         });
@@ -350,8 +378,10 @@
                 if (data) {
                     // Security Check
                     if (session.role !== 'admin') {
-                        const sName = data.sekolah || data.school || '';
-                        if (sName !== session.school) {
+                        const sName = (data.sekolah || data.school || '').trim().toLowerCase();
+                        const mySchool = (session.school || '').trim().toLowerCase();
+
+                        if (sName !== mySchool) {
                             alert("Anda tidak memiliki akses untuk mengedit data ini.");
                             return;
                         }

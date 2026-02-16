@@ -81,7 +81,10 @@
 
     <main class="main-content p-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="h3 fw-bold">Manajemen Sekolah</h2>
+            <div>
+                <h2 class="h3 fw-bold d-inline-block">Manajemen Sekolah</h2>
+                <span id="adminLevelBadge" class="badge bg-warning text-dark align-top ms-2 d-none"></span>
+            </div>
             <button id="btnAddSekolah" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSekolahModal">
                 <i class="bi bi-plus-lg me-1"></i> Tambah Sekolah
             </button>
@@ -197,6 +200,15 @@
         // Check Auth
         const session = Auth.check();
         if (!session) window.location.href = '../login.html';
+
+        // --- LEVEL BADGE UI ---
+        if (session.level_access && session.level_access !== 'ALL') {
+            const badge = document.getElementById('adminLevelBadge');
+            if (badge) {
+                badge.innerHTML = `<i class="bi bi-lock-fill"></i> Admin ${session.level_access}`;
+                badge.classList.remove('d-none');
+            }
+        }
 
         let isEditing = false;
         let editId = null;
