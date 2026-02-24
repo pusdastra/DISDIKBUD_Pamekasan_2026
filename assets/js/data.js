@@ -143,7 +143,7 @@ export const Auth = {
                 name: user.name,
                 role: user.role,
                 school: user.school,
-                // Operators don't have level_access usually, or matches their own level
+                level: user.level // Added to focus focus by level for operators
             };
             sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
             return { success: true, user: sessionData };

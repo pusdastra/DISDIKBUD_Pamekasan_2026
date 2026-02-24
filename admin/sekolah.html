@@ -202,10 +202,11 @@
         if (!session) window.location.href = '../login.html';
 
         // --- LEVEL BADGE UI ---
-        if (session.level_access && session.level_access !== 'ALL') {
+        if ((session.level_access && session.level_access !== 'ALL') || (session.role !== 'admin' && session.level)) {
+            const level = session.level_access || session.level;
             const badge = document.getElementById('adminLevelBadge');
             if (badge) {
-                badge.innerHTML = `<i class="bi bi-lock-fill"></i> Admin ${session.level_access}`;
+                badge.innerHTML = `<i class="bi bi-lock-fill"></i> ${session.role === 'admin' ? 'Admin' : 'Operator'} ${level}`;
                 badge.classList.remove('d-none');
             }
         }
@@ -232,9 +233,9 @@
                 if (emptyState) emptyState.classList.add('d-none');
 
                 // SINGLE DATA POLICY:
-                // If user is NOT admin, and their school data already exists, HIDE the "Add" button.
+                // If user is NOT admin, and their school data already exists (anywhere), HIDE the "Add" button.
                 if (session.role !== 'admin') {
-                    const existing = data.find(d => d.nama === session.school);
+                    const existing = data.find(d => d.nama && session.school && d.nama.trim().toLowerCase() === session.school.trim().toLowerCase());
                     const btnAdd = document.getElementById('btnAddSekolah');
                     if (existing && btnAdd) {
                         btnAdd.style.display = 'none';
@@ -250,10 +251,28 @@
                     return dateB - dateA;
                 });
 
-                // --- LEVEL ACCESS FILTERING (For Admin SD/SMP/PAUD) ---
+                // --- SEARCH & KECAMATAN FILTERING ---
+                const searchTerm = document.querySelector('input[placeholder*="Cari Nama"]').value.toLowerCase();
+                const filterKec = document.querySelector('select.form-select.w-auto').value;
+
+                if (searchTerm || (filterKec && filterKec !== 'Semua Kecamatan')) {
+                    data = data.filter(d => {
+                        const matchSearch = !searchTerm ||
+                            (d.nama || '').toLowerCase().includes(searchTerm) ||
+                            (d.npsn || '').toString().includes(searchTerm);
+                        const matchKec = !filterKec || filterKec === 'Semua Kecamatan' || d.kecamatan === filterKec;
+                        return matchSearch && matchKec;
+                    });
+                }
+
+                // --- LEVEL ACCESS FILTERING (For Admin SD/SMP/PAUD & Operators) ---
                 if (session.role === 'admin' && session.level_access && session.level_access !== 'ALL') {
-                    // Robust Case-Insensitive Check
+                    // Admin Focus: Filter by access level
                     data = data.filter(d => (d.jenjang || '').toUpperCase() === session.level_access.toUpperCase());
+                } else if (session.role !== 'admin' && (session.level || session.level_access)) {
+                    // Operator Focus: Filter by their school's level
+                    const targetLevel = (session.level || session.level_access).toUpperCase();
+                    data = data.filter(d => (d.jenjang || '').toUpperCase() === targetLevel);
                 }
 
                 data.forEach((item, index) => {
@@ -375,18 +394,28 @@
             }
         };
 
-        // Modal Open Handler (Auto-Fill & Lock Name)
+        // Modal Open Handler (Auto-Fill & Lock Name/Jenjang)
         document.getElementById('addSekolahModal').addEventListener('show.bs.modal', function () {
             const nameInput = document.getElementById('inputNamaSekolah');
+            const jenjangInput = document.getElementById('inputJenjang');
+
             if (session.role !== 'admin') {
                 nameInput.value = session.school;
                 nameInput.readOnly = true;
                 nameInput.classList.add('bg-light'); // Visual cue
+
+                if (session.level) {
+                    jenjangInput.value = session.level;
+                    jenjangInput.disabled = true;
+                    jenjangInput.classList.add('bg-light');
+                }
             } else {
                 // Determine if we are adding new or editing (logic mostly handled by edit function, but reset for Add)
                 if (!isEditing) {
                     nameInput.readOnly = false;
                     nameInput.classList.remove('bg-light');
+                    jenjangInput.disabled = false;
+                    jenjangInput.classList.remove('bg-light');
                 }
             }
         });
@@ -401,6 +430,10 @@
         });
 
         renderTable();
+
+        // Listen for filter changes
+        document.querySelector('input[placeholder*="Cari Nama"]').addEventListener('input', renderTable);
+        document.querySelector('select.form-select.w-auto').addEventListener('change', renderTable);
     </script>
 
 </html>

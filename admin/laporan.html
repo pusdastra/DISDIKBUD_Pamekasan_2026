@@ -72,7 +72,10 @@
 
     <main class="main-content p-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="h3 fw-bold">Laporan & Export Data</h2>
+            <div>
+                <h2 class="h3 fw-bold d-inline-block">Laporan & Export Data</h2>
+                <span id="adminLevelBadge" class="badge bg-warning text-dark align-top ms-2 d-none"></span>
+            </div>
         </div>
 
         <!-- Access Denied Message for Non-Admins -->
@@ -166,25 +169,40 @@
             window.location.href = '../login.html';
         }
 
-        // 2. Strict Access Control: ONLY ADMIN
-        if (session.role !== 'admin') {
-            document.getElementById('exportCard').classList.add('d-none');
-            document.getElementById('accessDenied').classList.remove('d-none');
-        } else {
-            // Admin Access Logic
-            const jenjangSelect = document.getElementById('filterJenjang');
-            const currentYear = new Date().getFullYear();
-            document.getElementById('filterTahun').value = currentYear;
+        // 2. Access Control: Admins and Operators
+        const jenjangSelect = document.getElementById('filterJenjang');
+        const currentYear = new Date().getFullYear();
+        document.getElementById('filterTahun').value = currentYear;
 
-            // If Admin limits exist (e.g. Admin SD), lock the Jenjang filter
+        if (session.role === 'admin') {
+            // Admin Logic
             if (session.level_access && session.level_access !== 'ALL') {
                 jenjangSelect.value = session.level_access;
                 jenjangSelect.disabled = true;
                 document.getElementById('jenjangHelp').innerText = `Anda hanya dapat mengakses laporan untuk jenjang ${session.level_access}.`;
             }
+        } else if (session.level) {
+            // Operator Logic (New Access)
+            jenjangSelect.value = session.level;
+            jenjangSelect.disabled = true;
+            document.getElementById('jenjangHelp').innerText = `Anda hanya dapat mengakses laporan untuk jenjang ${session.level}.`;
+        } else {
+            // Fallback for unexpected roles/missing levels
+            document.getElementById('exportCard').classList.add('d-none');
+            document.getElementById('accessDenied').classList.remove('d-none');
         }
 
-        // Download Logic
+        // --- LEVEL BADGE UI ---
+        if ((session.level_access && session.level_access !== 'ALL') || (session.role !== 'admin' && session.level)) {
+            const level = session.level_access || session.level;
+            const badge = document.getElementById('adminLevelBadge');
+            if (badge) {
+                badge.innerHTML = `<i class="bi bi-lock-fill"></i> ${session.role === 'admin' ? 'Admin' : 'Operator'} ${level}`;
+                badge.classList.remove('d-none');
+            }
+        }
+
+        // Export Button Double-Check
         window.downloadReport = async function (format) {
             const btn = event.target.closest('button');
             const originalText = btn.innerHTML;
@@ -197,9 +215,11 @@
                 const filterTahun = document.getElementById('filterTahun').value;
                 const filterBulan = document.getElementById('filterBulan').value;
 
-                // Enforce Session Level if restricted (Double Check)
+                // Enforce Session Level/Access (Double Check)
                 if (session.level_access && session.level_access !== 'ALL') {
                     filterJenjang = session.level_access;
+                } else if (session.role !== 'admin' && session.level) {
+                    filterJenjang = session.level;
                 }
 
                 // Call Reports Module

@@ -113,7 +113,10 @@
     <!-- Main Content -->
     <main class="main-content p-4">
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
-            <h1 class="h2">Dashboard Overview</h1>
+            <div>
+                <h1 class="h2 d-inline-block">Dashboard Overview</h1>
+                <span id="headerLevelBadge" class="badge bg-warning text-dark align-top ms-2 d-none"></span>
+            </div>
             <div class="btn-toolbar mb-2 mb-md-0">
                 <div class="input-group me-2">
                     <span class="input-group-text bg-white border-0"><i class="bi bi-funnel"></i></span>
@@ -266,26 +269,39 @@
                         // --- 0. INITIALIZE FILTER & UI ---
                         const filterContainer = document.querySelector('.btn-toolbar .input-group');
                         const filterDropdown = document.getElementById('dashboardFilterJenjang');
+                        const headerBadge = document.getElementById('headerLevelBadge');
                         let currentFilter = 'ALL';
 
-                        // If Admin has specific level, HIDE dropdown and show Badge
+                        // Case 1: Level Admin (SD/SMP/PAUD Admin)
                         if (session.level_access && session.level_access !== 'ALL') {
                             currentFilter = session.level_access;
-
-                            // Replace Dropdown with Badge
                             if (filterContainer) {
-                                filterContainer.innerHTML = `
-                                    <span class="badge bg-warning text-dark fs-6 px-3 py-2">
-                                        <i class="bi bi-building me-1"></i> Admin ${session.level_access}
-                                    </span>
-                                `;
+                                filterContainer.innerHTML = `<span class="badge bg-warning text-dark fs-6 px-3 py-2"><i class="bi bi-building me-1"></i> Admin ${session.level_access}</span>`;
                             }
-                        } else {
-                            // Event Listener for Super Admin
-                            filterDropdown.addEventListener('change', () => {
-                                currentFilter = filterDropdown.value;
-                                renderDashboardData();
-                            });
+                            if (headerBadge) {
+                                headerBadge.innerHTML = `<i class="bi bi-lock-fill"></i> Admin ${session.level_access}`;
+                                headerBadge.classList.remove('d-none');
+                            }
+                        }
+                        // Case 2: School Operator (New Focus Logic)
+                        else if (session.role !== 'admin' && session.level) {
+                            currentFilter = session.level;
+                            if (filterContainer) {
+                                filterContainer.innerHTML = `<span class="badge bg-info text-dark fs-6 px-3 py-2"><i class="bi bi-person-badge-fill me-1"></i> Operator ${session.level}</span>`;
+                            }
+                            if (headerBadge) {
+                                headerBadge.innerHTML = `<i class="bi bi-lock-fill"></i> Operator ${session.level}`;
+                                headerBadge.classList.remove('d-none');
+                            }
+                        }
+                        // Case 3: Super Admin
+                        else {
+                            if (filterDropdown) {
+                                filterDropdown.addEventListener('change', () => {
+                                    currentFilter = filterDropdown.value;
+                                    renderDashboardData();
+                                });
+                            }
                         }
 
 

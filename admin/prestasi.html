@@ -201,10 +201,11 @@
         if (!session) window.location.href = '../login.html';
 
         // --- LEVEL BADGE UI ---
-        if (session.level_access && session.level_access !== 'ALL') {
+        if ((session.level_access && session.level_access !== 'ALL') || (session.role !== 'admin' && session.level)) {
+            const level = session.level_access || session.level;
             const badge = document.getElementById('adminLevelBadge');
             if (badge) {
-                badge.innerHTML = `<i class="bi bi-lock-fill"></i> Admin ${session.level_access}`;
+                badge.innerHTML = `<i class="bi bi-lock-fill"></i> ${session.role === 'admin' ? 'Admin' : 'Operator'} ${level}`;
                 badge.classList.remove('d-none');
             }
         }
@@ -239,7 +240,7 @@
 
                 // --- ROLE BASED ACCESS CONTROL ---
                 if (session.role !== 'admin') {
-                    // STRICT ISOLATION: School Operator sees ONLY their own school's data
+                    // Operator Logic: Default to showing ONLY their own school's data for management
                     data = data.filter(item => {
                         const sName = (item.sekolah || item.school || '').trim().toLowerCase();
                         const mySchool = (session.school || '').trim().toLowerCase();
@@ -415,9 +416,11 @@
             try {
                 let schools = await DataStore.getSekolah();
 
-                // DATA ISOLATION: Filter Suggestions based on Admin Level
+                // DATA ISOLATION: Filter Suggestions based on Admin Level or Operator Level
                 if (session.role === 'admin' && session.level_access && session.level_access !== 'ALL') {
                     schools = schools.filter(s => (s.jenjang || '').toUpperCase() === session.level_access.toUpperCase());
+                } else if (session.role !== 'admin' && session.level) {
+                    schools = schools.filter(s => (s.jenjang || '').toUpperCase() === session.level.toUpperCase());
                 }
 
                 const datalist = document.getElementById('schoolOptions');
