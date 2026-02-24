@@ -31,6 +31,11 @@ export const Auth = {
                 return { success: false, message: 'Email sudah terdaftar.' };
             }
 
+            // Enforce @gmail.com
+            if (!email.toLowerCase().endsWith('@gmail.com')) {
+                return { success: false, message: 'Pendaftaran hanya diperbolehkan menggunakan akun @gmail.com.' };
+            }
+
             // Create User Document
             const isSuperAdmin = email === 'disdikbudpamekasan08@gmail.com';
 
